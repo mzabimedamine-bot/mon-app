@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1814">
+<title>Mon App</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f7f5f0;--w:#fff;--ink:#1a1814;--muted:#8a8070;--light:#c8bfb0;
+  --border:#e5e0d8;--soft:#f0ece4;
+  --fire:#d94f00;--fbg:#fff2ec;
+  --jade:#006e42;--jbg:#e8f4ee;
+  --amber:#a06800;--abg:#fff6e0;
+  --ice:#1450a0;--ibg:#e8eef8;
+  --sea:#0077aa;--sbg:#e0f2fa;
+  --rose:#c0203a;--rbg:#fce8ec;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Barlow',sans-serif;font-weight:400;color:var(--ink);display:flex;flex-direction:column}
+
+/* ── STATUS BAR (calories + streak) ── */
+.status-bar{
+  background:var(--ink);
+  padding:14px 18px 12px;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-shrink:0;
+}
+.sb-left{}
+.sb-app{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0.1em;color:rgba(255,255,255,.4)}
+.sb-cal{font-family:'Bebas Neue',sans-serif;font-size:32px;color:#fff;line-height:1;letter-spacing:-0.01em}
+.sb-cal span{font-size:16px;color:rgba(255,255,255,.4);font-family:'Bebas Neue',sans-serif}
+.sb-remain{font-size:11px;margin-top:2px}
+.sb-right{text-align:right}
+.sb-streak{font-family:'Bebas Neue',sans-serif;font-size:30px;color:#ffaa00;line-height:1}
+.sb-slbl{font-size:9px;color:rgba(255,170,0,.6);letter-spacing:0.12em;text-transform:uppercase;margin-top:1px}
+
+/* ── PROGRESS BAR ── */
+.cal-prog{height:4px;background:rgba(255,255,255,.1);flex-shrink:0}
+.cal-prog-fill{height:100%;background:linear-gradient(90deg,var(--fire),var(--amber));transition:width .4s}
+
+/* ── SCREENS ── */
+.screen{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.active{display:block}
+.pad{padding:14px 16px 24px}
+
+/* ── BOTTOM NAV — GROS BOUTONS ── */
+.bnav{
+  background:var(--w);
+  border-top:2px solid var(--border);
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  flex-shrink:0;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bn{
+  padding:10px 4px 12px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  cursor:pointer;user-select:none;
+  border-top:3px solid transparent;
+  transition:all .15s;
+}
+.bn.active{border-top-color:var(--fire)}
+.bn-ico{font-size:26px;line-height:1}
+.bn-lbl{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:0.08em;color:var(--muted)}
+.bn.active .bn-lbl{color:var(--fire)}
+
+/* ── CARDS ── */
+.card{background:var(--w);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.card-head{padding:14px 16px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.06em;color:var(--ink);flex:1}
+.badge{font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px}
+.b-fire{background:var(--fbg);color:var(--fire)}
+.b-jade{background:var(--jbg);color:var(--jade)}
+.b-amber{background:var(--abg);color:var(--amber)}
+.b-sea{background:var(--sbg);color:var(--sea)}
+.card-body{padding:14px 16px}
+
+/* ── ALERT ── */
+.alert{border-radius:12px;padding:13px 15px;margin-bottom:12px;border-left:4px solid}
+.a-fire{background:var(--fbg);border-color:var(--fire)}
+.a-jade{background:var(--jbg);border-color:var(--jade)}
+.a-amber{background:var(--abg);border-color:var(--amber)}
+.a-sea{background:var(--sbg);border-color:var(--sea)}
+.alert-title{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.08em;margin-bottom:4px}
+.a-fire .alert-title{color:var(--fire)}.a-jade .alert-title{color:var(--jade)}
+.a-amber .alert-title{color:var(--amber)}.a-sea .alert-title{color:var(--sea)}
+.alert-text{font-size:13px;color:var(--ink);line-height:1.6;opacity:.85}
+.alert-text strong{font-weight:600;opacity:1}
+
+/* ── CHECKLIST ── */
+.tc{display:flex;align-items:center;gap:14px;padding:15px 16px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.tc:last-child{border-bottom:none}
+.tc:active{background:var(--soft)}
+.tc.on{background:rgba(0,110,66,.04)}
+.tc-box{width:30px;height:30px;border-radius:8px;border:2px solid var(--light);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;transition:all .15s}
+.tc.on .tc-box{background:var(--jade);border-color:var(--jade);color:#fff}
+.tc-body{flex:1}
+.tc-lbl{font-size:15px;color:var(--ink);font-weight:500}
+.tc.on .tc-lbl{text-decoration:line-through;color:var(--muted)}
+.tc-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.tc-pts{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--amber);flex-shrink:0}
+
+/* ── SCORE ── */
+.score-block{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sc-num{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--amber);line-height:1}
+.sc-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.sc-right{text-align:right}
+.sc-grade{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--ink)}
+.sc-msg{font-size:12px;color:var(--muted);margin-top:3px}
+.sc-bar{height:12px;background:var(--soft);border-radius:6px;overflow:hidden}
+.sc-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--fire),var(--amber));transition:width .4s}
+
+/* ── STREAK DOTS ── */
+.sdots{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;margin-bottom:8px}
+.sdot{height:14px;border-radius:4px;background:var(--soft)}
+.sdot.on{background:var(--jade)}
+.sdot.now{background:var(--fire)}
+.sdot.off{background:var(--rbg)}
+
+/* ── MEAL BUTTONS ── */
+.meal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.mb{padding:16px 8px;background:var(--w);border:2px solid var(--border);border-radius:14px;text-align:center;cursor:pointer;user-select:none;transition:all .15s}
+.mb:active{transform:scale(.96)}
+.mb.on{background:var(--fbg);border-color:var(--fire)}
+.mb-ico{font-size:28px;display:block;margin-bottom:4px}
+.mb-name{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.06em;color:var(--muted)}
+.mb.on .mb-name{color:var(--fire)}
+.mb-kcal{font-size:10px;color:var(--light);margin-top:2px}
+
+/* ── SEARCH ── */
+.sinp{width:100%;background:var(--w);border:2px solid var(--border);border-radius:14px;padding:16px 18px;font-size:17px;color:var(--ink);font-family:'Barlow',sans-serif;outline:none;margin-bottom:8px;display:block}
+.sinp:focus{border-color:var(--fire)}
+.sinp::placeholder{color:var(--light)}
+
+.aclist{background:var(--w);border:2px solid var(--fire);border-radius:14px;overflow:hidden;margin-bottom:10px;display:none}
+.acrow{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);cursor:pointer}
+.acrow:last-child{border-bottom:none}
+.acrow:active{background:var(--soft)}
+.ac-name{font-size:15px;font-weight:500;color:var(--ink)}
+.ac-cat{font-size:11px;color:var(--muted);margin-top:2px}
+.ac-k{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--amber)}
+.ac-u{font-size:10px;color:var(--muted);text-align:right;margin-top:2px}
+
+.sprev{background:var(--abg);border:2px solid var(--amber);border-radius:12px;padding:13px 16px;margin-bottom:10px;display:none}
+.sprev-name{font-size:15px;font-weight:500;margin-bottom:3px}
+.sprev-info{font-size:12px;color:var(--amber)}
+
+.qinp{width:100%;background:var(--w);border:2px solid var(--border);border-radius:14px;padding:16px 18px;font-size:22px;font-weight:600;color:var(--ink);font-family:'Barlow',sans-serif;outline:none;text-align:center;margin-bottom:12px}
+.qinp:focus{border-color:var(--amber)}
+.qinp::placeholder{color:var(--light);font-size:14px;font-weight:400}
+
+.abtn{width:100%;padding:18px;background:var(--fire);border:none;border-radius:14px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.06em;color:#fff;cursor:pointer}
+.abtn:active{opacity:.85}
+
+/* ── FOOD LIST ── */
+.msec{background:var(--w);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px}
+.msec-head{padding:13px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:var(--soft)}
+.msec-lbl{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.msec-kcal{font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--amber)}
+.frow{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+.frow:last-child{border-bottom:none}
+.fr-name{font-size:14px;font-weight:500;color:var(--ink);flex:1}
+.fr-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.fr-r{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:8px}
+.fr-k{font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--amber)}
+.frdel{width:30px;height:30px;border-radius:50%;background:var(--rbg);border:none;color:var(--rose);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.empty-lbl{padding:16px;font-size:13px;color:var(--light);text-align:center;font-style:italic}
+.total-block{background:var(--ink);border-radius:14px;padding:15px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.total-lbl{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+.total-val{font-family:'Bebas Neue',sans-serif;font-size:24px;color:#fff}
+
+/* ── PROGRAMME ── */
+.drow{background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;user-select:none}
+.drow:active{background:var(--border)}
+.drow.today{background:var(--fbg);border-color:var(--fire)}
+.drow-top{display:flex;gap:12px;align-items:flex-start}
+.drow-day{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--muted);min-width:40px;line-height:1;margin-top:1px}
+.drow.today .drow-day{color:var(--fire)}
+.drow-info{flex:1}
+.drow-title{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.drow-sub{font-size:12px;color:var(--muted);line-height:1.4}
+.drow-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.dtag{font-size:9px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:0.04em}
+.d-pec{background:var(--jbg);color:var(--jade)}
+.d-sho{background:var(--ibg);color:var(--ice)}
+.d-run{background:var(--sbg);color:var(--sea)}
+.d-cardio{background:var(--abg);color:var(--amber)}
+.d-rest{background:var(--soft);color:var(--muted)}
+.d-core{color:#6a1a8a;background:#f4eafa}
+.drow-arrow{font-size:16px;color:var(--light);flex-shrink:0;transition:transform .2s}
+.drow-arrow.open{transform:rotate(90deg)}
+.drow-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);line-height:1.8}
+.drow-detail.open{display:block}
+.drow-detail strong{color:var(--ink);font-weight:600}
+
+/* ── OBJECTIFS ── */
+.obj-section-title{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:0.15em;color:var(--muted);margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.obj-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.obj-section-title:first-child{margin-top:0}
+.oitem{display:flex;gap:12px;padding:13px 14px;background:var(--soft);border-radius:10px;margin-bottom:7px;border:1px solid var(--border);cursor:pointer;user-select:none;align-items:flex-start}
+.oitem:active{background:var(--border)}
+.oitem.done{opacity:.5;background:var(--jbg)}
+.ocheck{width:24px;height:24px;border-radius:50%;border:2px solid var(--light);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.oitem.done .ocheck{background:var(--jade);border-color:var(--jade);color:#fff;font-weight:700}
+.oname{font-size:14px;font-weight:600;color:var(--ink);flex:1}
+.oitem.done .oname{text-decoration:line-through;color:var(--muted)}
+.odesc{font-size:11px;color:var(--muted);margin-top:2px}
+.owhen{font-family:'Bebas Neue',sans-serif;font-size:13px;flex-shrink:0;text-align:right}
+
+/* ── TIMELINE ── */
+.tl-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.tl-item:last-child{border-bottom:none;padding-bottom:0}
+.tl-item:first-child{padding-top:0}
+.tl-dot-col{display:flex;flex-direction:column;align-items:center}
+.tl-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--light);background:var(--light);flex-shrink:0;margin-top:3px}
+.tl-dot.now{background:var(--fire);border-color:var(--fire)}
+.tl-dot.run{background:var(--sea);border-color:var(--sea)}
+.tl-dot.summer{background:var(--amber);border-color:var(--amber)}
+.tl-dot.win{background:var(--jade);border-color:var(--jade)}
+.tl-line{flex:1;width:2px;background:var(--border);margin:3px 0;min-height:14px}
+.tl-date{font-family:'Bebas Neue',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0.08em;min-width:46px;padding-top:3px}
+.tl-body{flex:1}
+.tl-w{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--ink);line-height:1}
+.tl-w.fire{color:var(--fire)}.tl-w.run{color:var(--sea)}.tl-w.summer{color:var(--amber)}.tl-w.win{color:var(--jade)}
+.tl-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── CIG / POIDS / NOTE ── */
+.cig-wrap{display:flex;align-items:center;gap:16px;padding:4px 0}
+.cig-n{font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;min-width:60px}
+.cig-n.z{color:var(--jade)}.cig-n.b{color:var(--rose)}
+.cig-btns{display:flex;flex-direction:column;gap:8px}
+.cig-btn{width:46px;height:46px;border-radius:10px;border:2px solid var(--border);background:var(--soft);font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cig-btn:active{opacity:.7}
+.cig-msg strong{display:block;font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.cig-msg p{font-size:12px;color:var(--muted);line-height:1.5}
+.pinp-wrap{position:relative;flex:1}
+.pinp{width:100%;background:var(--soft);border:2px solid var(--border);border-radius:12px;padding:14px 46px 14px 16px;font-size:24px;font-weight:700;color:var(--ink);font-family:'Barlow',sans-serif;outline:none}
+.pinp:focus{border-color:var(--ice)}
+.punit{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);font-weight:600}
+.psave{padding:14px 18px;background:var(--ice);border:none;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0.06em;color:#fff;cursor:pointer;white-space:nowrap}
+.narea{width:100%;background:var(--soft);border:2px solid var(--border);border-radius:12px;padding:14px;font-size:15px;color:var(--ink);font-family:'Barlow',sans-serif;outline:none;resize:none;min-height:90px;line-height:1.6}
+.narea::placeholder{color:var(--light)}
+.narea:focus{border-color:var(--muted)}
+
+/* ── PROTO ── */
+.proto{padding:14px;background:var(--soft);border-radius:12px;margin-bottom:8px;border-left:3px solid var(--fire)}
+.proto-head{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.proto-num{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--light)}
+.proto-title{font-size:15px;font-weight:600;color:var(--ink)}
+.proto-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.proto-act{margin-top:7px;font-size:12px;font-weight:600;color:var(--fire);padding:6px 12px;background:var(--fbg);border-radius:6px;display:inline-block}
+
+/* ── HIST ── */
+.wsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.ws{background:var(--w);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center}
+.ws-v{font-family:'Bebas Neue',sans-serif;font-size:24px;line-height:1}
+.ws-v.jade{color:var(--jade)}.ws-v.fire{color:var(--fire)}.ws-v.amber{color:var(--amber)}
+.ws-l{font-size:9px;color:var(--muted);margin-top:3px}
+.hitem{background:var(--w);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid var(--border)}
+.hitem.good{border-left-color:var(--jade)}.hitem.over{border-left-color:var(--rose)}
+.hi-date{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--ink)}
+.hi-det{font-size:11px;color:var(--muted);margin-top:2px}
+.hi-cal{font-family:'Bebas Neue',sans-serif;font-size:17px;font-weight:700}
+.hi-cal.good{color:var(--jade)}.hi-cal.over{color:var(--rose)}.hi-cal.miss{color:var(--light)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--jade);color:#fff;padding:12px 24px;border-radius:24px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.06em;transition:transform .3s;z-index:999;white-space:nowrap;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="sb-left">
+    <div class="sb-app" style="display:flex;align-items:center;gap:8px">
+      <span>🇲🇦 MON APP</span>
+      <span id="sync-status" style="font-size:9px;color:rgba(255,170,0,.7);letter-spacing:0.06em;opacity:0;transition:opacity .5s"></span>
+      <button onclick="syncNow()" style="background:none;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:2px 8px;font-size:9px;color:rgba(255,255,255,.4);cursor:pointer;font-family:Barlow,sans-serif">⟳ sync</button>
+    </div>
+    <div class="sb-cal" id="sb-cal">0 <span>/ 1700</span></div>
+    <div class="sb-remain" id="sb-remain" style="color:#ffaa00">1700 kcal restantes</div>
+  </div>
+  <div class="sb-right">
+    <div class="sb-streak" id="sb-streak">0</div>
+    <div class="sb-slbl">🔥 streak</div>
+  </div>
+</div>
+<div class="cal-prog"><div class="cal-prog-fill" id="cal-prog-fill" style="width:0%"></div></div>
+
+<!-- SCREEN: AUJOURD'HUI -->
+<div class="screen active" id="sc-1">
+<div class="pad">
+  <div class="alert a-fire" id="day-alert">
+    <div class="alert-title" id="day-title">LUNDI 27 AVRIL — JOUR 1</div>
+    <div class="alert-text" id="day-text">Haut du corps A + Cardio. Première séance ce soir.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">✅ 5 ACTIONS DU JOUR</div>
+      <div class="badge b-amber" id="pts-badge">0 pts</div>
+    </div>
+    <div class="tc" id="tc-sport" onclick="ck(this,'sport')">
+      <div class="tc-box"></div>
+      <div class="tc-body"><div class="tc-lbl">💪 Séance faite</div><div class="tc-sub">Même 20 min — ça compte</div></div>
+      <div class="tc-pts">+30</div>
+    </div>
+    <div class="tc" id="tc-cal" onclick="ck(this,'calories')">
+      <div class="tc-box"></div>
+      <div class="tc-body"><div class="tc-lbl">🍽 ≤ 1700 kcal</div><div class="tc-sub">Planifiées le matin</div></div>
+      <div class="tc-pts">+25</div>
+    </div>
+    <div class="tc" id="tc-cig" onclick="ck(this,'cig')">
+      <div class="tc-box"></div>
+      <div class="tc-body"><div class="tc-lbl">🚬 Zéro cigarette</div><div class="tc-sub">Remplace : marche 5 min</div></div>
+      <div class="tc-pts">+20</div>
+    </div>
+    <div class="tc" id="tc-steps" onclick="ck(this,'steps')">
+      <div class="tc-box"></div>
+      <div class="tc-body"><div class="tc-lbl">🚶 7000 pas</div><div class="tc-sub">Escaliers + marche boulot</div></div>
+      <div class="tc-pts">+15</div>
+    </div>
+    <div class="tc" id="tc-eau" onclick="ck(this,'eau')">
+      <div class="tc-box"></div>
+      <div class="tc-body"><div class="tc-lbl">💧 1.5L d'eau</div><div class="tc-sub">Eau / Oulmès / thé sans sucre</div></div>
+      <div class="tc-pts">+10</div>
+    </div>
+    <div class="tc" id="tc-posture" onclick="ck(this,'posture')">
+      <div class="tc-box"></div>
+      <div class="tc-body"><div class="tc-lbl">🧘 Routine posture matin</div><div class="tc-sub">Vacuum 5×30s · Psoas 2×30s · Chat-vache — dans le lit</div></div>
+      <div class="tc-pts">+10</div>
+    </div>
+    <div class="tc" id="tc-posture2" onclick="ck(this,'posture2')">
+      <div class="tc-box"></div>
+      <div class="tc-body"><div class="tc-lbl">🌙 Étirements posture soir</div><div class="tc-sub">Pectoraux dans porte · Psoas fente · 5 min</div></div>
+      <div class="tc-pts">+10</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">⚡ SCORE</div></div>
+    <div class="card-body">
+      <div class="score-block">
+        <div><div class="sc-num" id="sc-num">0</div><div class="sc-lbl">pts · max 120</div></div>
+        <div class="sc-right"><div class="sc-grade" id="sc-grade">—</div><div class="sc-msg" id="sc-msg">Commence !</div></div>
+      </div>
+      <div class="sc-bar"><div class="sc-fill" id="sc-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">🔥 STREAK</div><div class="badge b-amber" id="streak-badge">0 jours</div></div>
+    <div class="card-body">
+      <div class="sdots" id="sdots"></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">Règle : <strong style="color:var(--ink)">jamais 2 jours vides d\'affilée</strong></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SCREEN: AJOUTER -->
+<div class="screen" id="sc-2">
+<div class="pad">
+  <div class="meal-grid">
+    <div class="mb on" data-meal="matin" onclick="pm(this)"><span class="mb-ico">☀️</span><span class="mb-name">Matin</span><div class="mb-kcal">~380 kcal</div></div>
+    <div class="mb" data-meal="dejeuner" onclick="pm(this)"><span class="mb-ico">🌤</span><span class="mb-name">Déjeuner</span><div class="mb-kcal">~560 kcal</div></div>
+    <div class="mb" data-meal="diner" onclick="pm(this)"><span class="mb-ico">🌙</span><span class="mb-name">Dîner</span><div class="mb-kcal">~480 kcal</div></div>
+    <div class="mb" data-meal="collation" onclick="pm(this)"><span class="mb-ico">🍵</span><span class="mb-name">Collation</span><div class="mb-kcal">~80 kcal</div></div>
+  </div>
+  <input class="sinp" id="fsearch" type="text" placeholder="Tajine, granola, bubble tea…" autocomplete="off" autocorrect="off" spellcheck="false" oninput="ds()" onkeydown="if(event.key==='Enter')af()">
+  <div class="aclist" id="aclist"></div>
+  <div class="sprev" id="sprev"><div class="sprev-name" id="sprev-name"></div><div class="sprev-info" id="sprev-info"></div></div>
+  <input class="qinp" id="fqty" type="number" inputmode="decimal" placeholder="Quantité en g ou ml" min="1" onkeydown="if(event.key==='Enter')af()">
+  <button class="abtn" onclick="af()">✚ Ajouter</button>
+</div>
+</div>
+
+<!-- SCREEN: REPAS -->
+<div class="screen" id="sc-3">
+<div class="pad" id="repas-container"></div>
+</div>
+
+<!-- SCREEN: SPORT + OBJECTIFS -->
+<div class="screen" id="sc-4">
+<div class="pad">
+  <div class="alert a-amber">
+    <div class="alert-title">💪 PROGRAMME — CLIQUE POUR LE DÉTAIL</div>
+    <div class="alert-text">Tapis plat pour le cardio. Côtière pour la course. Aujourd'hui en orange.</div>
+  </div>
+
+  <div class="drow today" id="dr-lun" onclick="td('lun')">
+    <div class="drow-top"><div class="drow-day">LUN</div><div class="drow-info"><div class="drow-title">Haut du corps A + Tapis</div><div class="drow-sub">Pompes · Haltères épaules · Rowing · Curl</div><div class="drow-tags"><span class="dtag d-pec">Pectoraux</span><span class="dtag d-sho">Épaules</span><span class="dtag d-cardio">Tapis</span></div></div><div class="drow-arrow" id="da-lun">▶</div></div>
+    <div class="drow-detail" id="dd-lun">
+<strong>① Tapis plat 20→30 min</strong> (7→8.5 km/h)<br><br>
+<strong>② Pectoraux</strong><br>
+Pompes classiques : 4×max — descente 3s lente<br>
+Pompes larges : 3×10<br>
+Pompes déclinées pieds chaise : 3×8<br>
+Dips sur chaise : 3×12<br>
+🏋️ <em>Écrasé haltères sol (chest press)</em> : allongé, haltères à 6–8 kg, pousser vers le haut · 4×10<br><br>
+<strong>③ Épaules — priorité élargissement</strong><br>
+Pike push-ups : 4×10<br>
+🏋️ <em>Développé épaules haltères assis</em> : 4–6 kg, pousser au-dessus de la tête · 4×10<br>
+🏋️ <em>Élévations latérales</em> : 3–4 kg, pause 1s en haut · 4×15<br>
+🏋️ <em>Élévations frontales</em> : 3–4 kg, un bras à la fois · 3×12<br>
+🏋️ <em>Oiseau (élévations arrières buste penché)</em> : 2–3 kg · 3×15<br><br>
+<strong>④ Dos &amp; Biceps</strong><br>
+Rowing sous table : 3×10<br>
+🏋️ <em>Rowing unilatéral haltère</em> : genou sur banc, 8–10 kg · 4×10/bras<br>
+🏋️ <em>Curl biceps haltères</em> : 6–8 kg, descente lente · 3×12<br>
+🏋️ <em>Curl marteau</em> : 6–8 kg, poignet neutre · 3×12<br>
+🏋️ <em>Curl concentré assis</em> : 6–8 kg · 3×10/bras
+</div>
+  </div>
+
+  <div class="drow" id="dr-mar" onclick="td('mar')">
+    <div class="drow-top"><div class="drow-day">MAR</div><div class="drow-info"><div class="drow-title">Course progressive</div><div class="drow-sub">S1: 3km · S2: 5km · S3: 6km · S4: 7km</div><div class="drow-tags"><span class="dtag d-run">Course</span><span class="dtag d-cardio">Brûle-gras</span></div></div><div class="drow-arrow" id="da-mar">▶</div></div>
+    <div class="drow-detail" id="dd-mar">Côtière ou tapis · 5 min marche avant · Allure confortable (tu peux parler) · Retour 5 min marche<br><strong>Côtière :</strong> demi-tour à mi-distance · 6.5–7 km/h</div>
+  </div>
+
+  <div class="drow" id="dr-mer" onclick="td('mer')">
+    <div class="drow-top"><div class="drow-day">MER</div><div class="drow-info"><div class="drow-title">Bas du corps & Core + Tapis</div><div class="drow-sub">Fentes haltères · Squat goblet · Core</div><div class="drow-tags"><span class="dtag d-core">Core</span><span class="dtag d-cardio">Tapis</span></div></div><div class="drow-arrow" id="da-mer">▶</div></div>
+    <div class="drow-detail" id="dd-mer">
+<strong>① Tapis plat 25 min</strong><br><br>
+<strong>② Bas du corps — genoux protégés</strong><br>
+Pont fessier : 4×20<br>
+Pont unilatéral : 3×12/jambe<br>
+🏋️ <em>Fentes avant haltères</em> : 4–6 kg · 3×10/jambe<br>
+🏋️ <em>Squat goblet haltère</em> : 8–10 kg · 3×12<br>
+Wall sit : 3×40s<br>
+🏋️ <em>Romanian deadlift haltères</em> : 8–10 kg, dos droit · 3×12<br>
+🏋️ <em>Step-ups haltères</em> : 4–6 kg · 3×10/jambe<br><br>
+<strong>③ Core profond — ventre plat + posture</strong><br>
+Gainage planche : 3×50s<br>
+<em>Vacuum abdominal</em> : rentrer nombril sans bloquer · 5×30s — core profond<br>
+Crunch bicycle : 3×20<br>
+Relevés de jambes : 3×15<br>
+Gainage latéral : 3×30s/côté<br>
+🏋️ <em>Russian twist haltère</em> : 4–6 kg · 3×20<br>
+<em>Dead bug lent</em> : dos collé au sol · 3×10/côté<br><br>
+<strong>④ Posture — 5 min finisher</strong><br>
+Superman : 3×15<br>
+YTW au sol : 2×10 chaque position<br>
+Étirement psoas fente basse : 2×30s/côté
+</div>
+  </div>
+
+  <div class="drow" id="dr-jeu" onclick="td('jeu')">
+    <div class="drow-top"><div class="drow-day">JEU</div><div class="drow-info"><div class="drow-title">Repos actif</div><div class="drow-sub">Posture · Face pull · YTW · Étirements psoas</div><div class="drow-tags"><span class="dtag d-rest">Repos</span></div></div><div class="drow-arrow" id="da-jeu">▶</div></div>
+    <div class="drow-detail" id="dd-jeu">
+<strong>🚶 7000 pas + escaliers</strong><br><br>
+<strong>PROGRAMME POSTURE — 15 min (à faire tous les jours)</strong><br><br>
+<strong>① Contre la bosse du dos (cyphose)</strong><br>
+🏋️ <em>Face pull élastique</em> : tirer vers le visage, coudes hauts · 3×20 — muscle le plus important pour la posture<br>
+🏋️ <em>Rowing haltères buste penché</em> : serrer les omoplates en haut · 4×12<br>
+🏋️ <em>YTW au sol</em> : allongé ventre, lever les bras en Y puis T puis W · 3×10 chaque<br>
+<em>Superman</em> : allongé ventre, lever bras et jambes · 3×15<br><br>
+<strong>② Contre le ventre qui ressort (hyperlordose)</strong><br>
+<em>Gainage profond vacuum</em> : rentrer le nombril sans bloquer la respiration · tenir 30s · 5×<br>
+<em>Pont fessier serré</em> : serrer très fort les fessiers en haut · 4×20 — clé de la lordose<br>
+<em>Dead bug lent</em> : dos collé au sol, bras + jambe opposée · 3×10/côté<br>
+🏋️ <em>Fente étirement hip flexor</em> : genou au sol, basculer le bassin vers l'avant · 3×30s/côté<br><br>
+<strong>③ Étirements obligatoires</strong><br>
+Pectoraux dans encadrement porte : 3×30s — ouvre la cage thoracique<br>
+Étirement psoas (fente basse) : 3×40s/côté — libère le bassin<br>
+Chat-vache (dos rond puis creux) : 2×10 respirations<br>
+Étirement thoracique sur rouleau ou serviette roulée : 3×30s<br><br>
+<em>💡 Ces exercices pratiqués 15 min/jour ont plus d'impact sur ta silhouette que 1h de musculation.</em>
+</div>
+  </div>
+
+  <div class="drow" id="dr-ven" onclick="td('ven')">
+    <div class="drow-top"><div class="drow-day">VEN</div><div class="drow-info"><div class="drow-title">Haut du corps B + Tapis</div><div class="drow-sub">Fly · Arnold press · Triceps haltères</div><div class="drow-tags"><span class="dtag d-pec">Pectoraux</span><span class="dtag d-sho">Épaules</span><span class="dtag d-cardio">Tapis</span></div></div><div class="drow-arrow" id="da-ven">▶</div></div>
+    <div class="drow-detail" id="dd-ven">
+<strong>① Tapis plat 25 min</strong><br><br>
+<strong>② Pectoraux — variation</strong><br>
+Pompes déclinées pieds surélevés : 4×10<br>
+Pompes inclinées mains surélevées : 3×12<br>
+Dips lestés sac à dos : 3×10<br>
+🏋️ <em>Pullover haltère allongé</em> : 6–8 kg, bras tendus derrière la tête · 3×12<br>
+🏋️ <em>Fly haltères sol</em> : 4–6 kg, ouvrir les bras en croix · 3×12<br><br>
+<strong>③ Épaules avancé</strong><br>
+Pike push-ups pieds chaise : 4×8<br>
+🏋️ <em>Arnold press haltères</em> : 4–6 kg, rotation des poignets · 4×10<br>
+🏋️ <em>Upright row haltères</em> : 6–8 kg, tirer vers le menton · 3×12<br>
+🏋️ <em>Shrugs haltères</em> : 8–10 kg, hausser les épaules · 3×15<br><br>
+<strong>④ Triceps — definition bras</strong><br>
+🏋️ <em>Extension triceps couché</em> : 4–6 kg, descendre derrière la tête · 3×12<br>
+🏋️ <em>Kick-back triceps</em> : buste penché, repousser vers arrière · 3×15<br>
+🏋️ <em>Développé serré haltères</em> : 6–8 kg · 3×10
+</div>
+  </div>
+
+  <div class="drow" id="dr-sam" onclick="td('sam')">
+    <div class="drow-top"><div class="drow-day">SAM</div><div class="drow-info"><div class="drow-title">Sortie longue côtière + Abdos</div><div class="drow-sub">S1: 3km · S2: 5km · S3: 7km · S4: 9km</div><div class="drow-tags"><span class="dtag d-run">Course longue</span><span class="dtag d-core">Abdos</span></div></div><div class="drow-arrow" id="da-sam">▶</div></div>
+    <div class="drow-detail" id="dd-sam">Course longue 6–7 km/h · Ne jamais s\'arrêter (marcher si besoin)<br><strong>Abdos finisher :</strong> Gainage 3×max · Crunch bicycle 3×20 · Relevés jambes 3×15</div>
+  </div>
+
+  <div class="<div class="drow" id="dr-dim" onclick="td('dim')">
+    <div class="drow-top"><div class="drow-day">DIM</div><div class="drow-info"><div class="drow-title">Repos total — Obligatoire</div><div class="drow-sub">Le muscle se construit pendant le repos</div><div class="drow-tags"><span class="dtag d-rest">Repos</span></div></div><div class="drow-arrow" id="da-dim">▶</div></div>
+    <div class="drow-detail" id="dd-dim">Repos total. Pas de sport. Marche légère optionnelle. Obligatoire.</div>
+  </div>
+
+  <div style="height:16px"></div>
+  <div class="alert a-sea"><div class="alert-title">🎯 ACTIVITÉS OCCASIONNELLES</div><div class="alert-text">En plus du programme ou à la place d'une séance cardio. Tout compte.</div></div>
+
+  <div class="drow" id="dr-velo" onclick="td('velo')"><div class="drow-top"><div class="drow-day">🚴</div><div class="drow-info"><div class="drow-title">Vélo</div><div class="drow-sub">Cardio doux · Genoux protégés · 400–600 kcal/h</div><div class="drow-tags"><span class="dtag d-run">Cardio</span><span class="dtag d-rest">Genoux OK</span></div></div><div class="drow-arrow" id="da-velo">▶</div></div>
+    <div class="drow-detail" id="dd-velo"><strong>Calories :</strong> 400–600 kcal/h<br><strong>Avantage :</strong> zéro impact genoux<br><strong>Débutant :</strong> 30 min allure modérée<br><strong>Tapis vélo :</strong> niveau 5–7 · 80–90 RPM<br><em>Le vélo + déficit calorique = très efficace pour le gras du ventre</em></div>
+  </div>
+
+  <div class="drow" id="dr-corde" onclick="td('corde')"><div class="drow-top"><div class="drow-day">🪢</div><div class="drow-info"><div class="drow-title">Corde à sauter</div><div class="drow-sub">Cardio intense · 600–800 kcal/h · 15 min suffisent</div><div class="drow-tags"><span class="dtag d-run">Cardio</span><span class="dtag d-cardio">Intense</span></div></div><div class="drow-arrow" id="da-corde">▶</div></div>
+    <div class="drow-detail" id="dd-corde"><strong>Calories :</strong> 600–800 kcal/h — un des meilleurs cardio<br><strong>Débutant :</strong> 30s saut · 30s repos · 10 rounds<br><strong>Avancé :</strong> Tabata 20s max · 10s repos · 8 rounds<br><strong>Progression :</strong> Saut simple → Saut alterné → Double saut<br><em>15 min de corde = 30 min de jogging en calories brûlées</em></div>
+  </div>
+
+  <div class="drow" id="dr-trampoline" onclick="td('trampoline')"><div class="drow-top"><div class="drow-day">🤸</div><div class="drow-info"><div class="drow-title">Trampoline</div><div class="drow-sub">Cardio ludique · Lymphatique · Genoux protégés</div><div class="drow-tags"><span class="dtag d-run">Cardio</span><span class="dtag d-rest">Genoux OK</span></div></div><div class="drow-arrow" id="da-trampoline">▶</div></div>
+    <div class="drow-detail" id="dd-trampoline"><strong>Calories :</strong> 300–450 kcal/h<br><strong>Bonus :</strong> stimule le système lymphatique<br><strong>Séance :</strong> 20–30 min · Alterner sauts libres et genoux hauts<br><em>Tu as déjà un trampoline — utilise-le les jours de repos léger</em></div>
+  </div>
+
+  <div class="drow" id="dr-natation" onclick="td('natation')"><div class="drow-top"><div class="drow-day">🏊</div><div class="drow-info"><div class="drow-title">Natation</div><div class="drow-sub">Full body · Zéro impact · 400–700 kcal/h</div><div class="drow-tags"><span class="dtag d-pec">Full body</span><span class="dtag d-rest">Zéro impact</span></div></div><div class="drow-arrow" id="da-natation">▶</div></div>
+    <div class="drow-detail" id="dd-natation"><strong>Crawl :</strong> 600–700 kcal/h · <strong>Brasse :</strong> 400–500 kcal/h · <strong>Dos :</strong> excellent pour la posture<br><strong>Avantages :</strong> zéro pression genoux · travaille épaules et dos · récupération musculaire<br><em>1h natation 1× par semaine remplace avantageusement une séance cardio</em></div>
+  </div>
+
+  <div class="drow" id="dr-padel" onclick="td('padel')"><div class="drow-top"><div class="drow-day">🎾</div><div class="drow-info"><div class="drow-title">Padel</div><div class="drow-sub">Cardio fun · Social · 400–600 kcal/h</div><div class="drow-tags"><span class="dtag d-run">Cardio</span><span class="dtag d-sho">Épaules</span></div></div><div class="drow-arrow" id="da-padel">▶</div></div>
+    <div class="drow-detail" id="dd-padel"><strong>Calories :</strong> 400–600 kcal/h<br><strong>Travaille :</strong> cardio, réflexes, coordination, épaules, jambes<br><strong>Conseil :</strong> échauffement 5 min · compte comme séance cardio dans le tracker<br><em>Le padel 1× par semaine remplace parfaitement la course du samedi</em></div>
+  </div>
+
+  <div style="height:16px"></div>
+  <div class="alert a-fire"><div class="alert-title">🔥 CALLISTHÉNIE — OBJECTIF APRÈS 74 KG</div><div class="alert-text">Plus tu es léger, plus c'est efficace. On attend les <strong>74 kg</strong>. À ce stade tu seras déjà solide — la progression sera spectaculaire.</div></div>
+
+  <div class="drow" id="dr-cali1" onclick="td('cali1')"><div class="drow-top"><div class="drow-day">L1</div><div class="drow-info"><div class="drow-title">Callisthénie — Niveau 1 · Fondations</div><div class="drow-sub">Dès 74 kg · Maîtriser les bases absolues</div><div class="drow-tags"><span class="dtag d-pec">Force</span><span class="dtag d-sho">Corps entier</span></div></div><div class="drow-arrow" id="da-cali1">▶</div></div>
+    <div class="drow-detail" id="dd-cali1"><strong>Prérequis :</strong> 20 pompes · 10 tractions · Gainage 60s<br><strong>Poussée :</strong> Pompes archer 3×8/côté · Pompes avec claquements 3×5<br><strong>Tirage :</strong> Tractions prise large 4×max · Tractions australiennes 3×12<br><strong>Core :</strong> L-sit au sol 3×10s · Dragon flag négatif 3×5<br><strong>Jambes :</strong> Pistol squat assisté 3×5/jambe · Nordic curl 3×5<br><em>Objectif : 1 muscle-up · 5 tractions lestées · L-sit 20s</em></div>
+  </div>
+
+  <div class="drow" id="dr-cali2" onclick="td('cali2')"><div class="drow-top"><div class="drow-day">L2</div><div class="drow-info"><div class="drow-title">Callisthénie — Niveau 2 · Compétences</div><div class="drow-sub">Figures avancées · Corps sculptés</div><div class="drow-tags"><span class="dtag d-pec">Avancé</span><span class="dtag d-sho">Force</span></div></div><div class="drow-arrow" id="da-cali2">▶</div></div>
+    <div class="drow-detail" id="dd-cali2"><strong>Figures à maîtriser :</strong><br>🏆 Muscle-up : traction explosive au-dessus de la barre<br>🏆 Front lever : corps horizontal suspendu<br>🏆 Planche : corps horizontal bras tendus<br>🏆 Pistol squat : squat sur une jambe<br>🏆 Handstand push-up : pompe en équilibre<br>🏆 Human flag : corps horizontal latéral<br><strong>Matériel :</strong> Barre traction ~300 dh · Anneaux ~300 dh · Parallettes ~200 dh</div>
+  </div>
+
+  <div class="drow" id="dr-cali3" onclick="td('cali3')"><div class="drow-top"><div class="drow-day">L3</div><div class="drow-info"><div class="drow-title">Callisthénie — Niveau 3 · Elite</div><div class="drow-sub">Le corps parfait sans salle de sport</div><div class="drow-tags"><span class="dtag d-pec">Elite</span><span class="dtag d-sho">Corps entier</span></div></div><div class="drow-arrow" id="da-cali3">▶</div></div>
+    <div class="drow-detail" id="dd-cali3"><strong>Programme élite :</strong><br>Lundi : Muscle-ups 5×3 · Front lever 4×8s · Dips lestés 4×8<br>Mercredi : Handstand push-ups 4×5 · Planche progression · L-sit 4×15s<br>Vendredi : Pistol squats 4×8 · Nordic curls 3×8 · Dragon flag 3×8<br><strong>Résultat :</strong> épaules massives · pectoraux sculptés · abdos permanents · force réelle<br><em>Les meilleurs corps du monde viennent de la callisthénie. Chris Heria, Frank Medrano.</em></div>
+  </div>
+
+  <div style="height:16px"></div>
+
+  <!-- OBJECTIFS -->
+  <div class="alert a-fire">
+    <div class="alert-title">🏆 OBJECTIF PRINCIPAL</div>
+    <div class="alert-text"><strong>74 kg minimum · Corps athlétique · Août 2026</strong><br>Épaules larges · Pectoraux · Ventre plat · Non-fumeur</div>
+  </div>
+
+  <div class="obj-section-title">🎯 Court terme — cette semaine</div>
+  <div class="oitem" id="oi1" onclick="to(this,'1')"><div class="ocheck"></div><div><div class="oname">Séance ce soir</div><div class="odesc">20 min tapis + pompes + épaules</div></div><div class="owhen" style="color:var(--fire)">CE SOIR</div></div>
+  <div class="oitem" id="oi2" onclick="to(this,'2')"><div class="ocheck"></div><div><div class="oname">3 séances cette semaine</div><div class="odesc">Lun + Mer + Ven minimum</div></div><div class="owhen" style="color:var(--fire)">3 MAI</div></div>
+  <div class="oitem" id="oi3" onclick="to(this,'3')"><div class="ocheck"></div><div><div class="oname">Premier run 3 km — mardi</div><div class="odesc">Côtière ou tapis. Peu importe la vitesse.</div></div><div class="owhen" style="color:var(--fire)">29 AVR</div></div>
+  <div class="oitem" id="oi4" onclick="to(this,'4')"><div class="ocheck"></div><div><div class="oname">Streak de 7 jours</div><div class="odesc">Min 2 cases cochées par jour</div></div><div class="owhen" style="color:var(--fire)">3 MAI</div></div>
+
+  <div class="obj-section-title">📅 Moyen terme — ce mois</div>
+  <div class="oitem" id="oi5" onclick="to(this,'5')"><div class="ocheck"></div><div><div class="oname">10 km courus — 27 mai 🎯</div><div class="odesc">30 jours. C'est atteignable.</div></div><div class="owhen" style="color:var(--amber)">27 MAI</div></div>
+  <div class="oitem" id="oi6" onclick="to(this,'6')"><div class="ocheck"></div><div><div class="oname">82 kg sur la balance</div><div class="odesc">–3.5 kg en 4 semaines</div></div><div class="owhen" style="color:var(--amber)">27 MAI</div></div>
+  <div class="oitem" id="oi7" onclick="to(this,'7')"><div class="ocheck"></div><div><div class="oname">Zéro cigarette 30 jours</div><div class="odesc">Tu l'as déjà fait le weekend. Maintenant partout.</div></div><div class="owhen" style="color:var(--amber)">27 MAI</div></div>
+  <div class="oitem" id="oi8" onclick="to(this,'8')"><div class="ocheck"></div><div><div class="oname">78 kg — silhouette transformée</div><div class="odesc">–7.5 kg depuis le départ</div></div><div class="owhen" style="color:var(--amber)">JUIN</div></div>
+
+  <div class="obj-section-title">🏆 Long terme — cet été</div>
+  <div class="oitem" id="oi9" onclick="to(this,'9')"><div class="ocheck"></div><div><div class="oname">T-shirt sans honte — juillet</div><div class="odesc">76–78 kg · Épaules définies · Ventre plat</div></div><div class="owhen" style="color:var(--jade)">JUILLET</div></div>
+  <div class="oitem" id="oi10" onclick="to(this,'10')"><div class="ocheck"></div><div><div class="oname">74 kg minimum atteint</div><div class="odesc">Objectif plancher. Idéal : 72 kg.</div></div><div class="owhen" style="color:var(--jade)">AOÛT</div></div>
+  <div class="oitem" id="oi11" onclick="to(this,'11')"><div class="ocheck"></div><div><div class="oname">Corps athlétique — épaules larges, pecs formés</div><div class="odesc">4 mois. Visible sous n\'importe quel t-shirt.</div></div><div class="owhen" style="color:var(--jade)">AOÛT</div></div>
+  <div class="oitem" id="oi12" onclick="to(this,'12')"><div class="ocheck"></div><div><div class="oname">Non-fumeur définitif</div><div class="odesc">Plus de dépendance contextuelle au boulot</div></div><div class="owhen" style="color:var(--jade)">AOÛT</div></div>
+  <div class="oitem" id="oi13" onclick="to(this,'13')"><div class="ocheck"></div><div><div class="oname">Streak de 90 jours</div><div class="odesc">90 jours = habitude permanente</div></div><div class="owhen" style="color:var(--jade)">AOÛT</div></div>
+
+  <div class="obj-section-title">📅 Timeline</div>
+  <div class="card"><div class="card-body">
+    <div class="tl-item"><div class="tl-dot-col"><div class="tl-dot now"></div><div class="tl-line"></div></div><div class="tl-date">27 AVR</div><div class="tl-body"><div class="tl-w fire">85.5 kg</div><div class="tl-desc">Aujourd'hui. Jour 1.</div></div></div>
+    <div class="tl-item"><div class="tl-dot-col"><div class="tl-dot run"></div><div class="tl-line"></div></div><div class="tl-date">27 MAI</div><div class="tl-body"><div class="tl-w run">10 km 🎯</div><div class="tl-desc">82–83 kg · Épaules qui commencent</div></div></div>
+    <div class="tl-item"><div class="tl-dot-col"><div class="tl-dot summer"></div><div class="tl-line"></div></div><div class="tl-date">JUILLET</div><div class="tl-body"><div class="tl-w summer">76–78 kg</div><div class="tl-desc">Plage sans honte. Corps visible.</div></div></div>
+    <div class="tl-item"><div class="tl-dot-col"><div class="tl-dot win"></div></div><div class="tl-date">AOÛT</div><div class="tl-body"><div class="tl-w win">74 kg min 🏆</div><div class="tl-desc">Corps athlétique. Épaules larges. Fier.</div></div></div>
+  </div></div>
+</div>
+</div>
+
+<!-- SCREEN: PLUS -->
+<div class="screen" id="sc-5">
+<div class="pad">
+  <div class="card">
+    <div class="card-head"><div class="card-title">🚬 CIGARETTES</div></div>
+    <div class="card-body">
+      <div class="cig-wrap">
+        <div class="cig-n z" id="cig-n">0</div>
+        <div class="cig-btns">
+          <button class="cig-btn" onclick="cig(1)">+</button>
+          <button class="cig-btn" onclick="cig(-1)">−</button>
+        </div>
+        <div class="cig-msg" id="cig-msg"><strong>Zéro ✓</strong><p>Continue. Chaque jour sans compte.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">⚖️ POIDS — 1× PAR SEMAINE</div></div>
+    <div class="card-body">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="pinp-wrap">
+          <input class="pinp" type="number" inputmode="decimal" step="0.1" placeholder="85.5" id="pinp">
+          <span class="punit">kg</span>
+        </div>
+        <button class="psave" onclick="sp()">Sauver</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">📝 NOTE DU JOUR</div></div>
+    <div class="card-body">
+      <textarea class="narea" id="note" placeholder="Énergie, sommeil, faim, motivation…"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">📊 HISTORIQUE 7 JOURS</div></div>
+    <div class="card-body">
+      <div class="wsum" id="wsum"></div>
+      <div id="hlist"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">🔔 RAPPELS AUTOMATIQUES</div></div>
+    <div class="card-body">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6">
+        · <strong style="color:var(--ink)">7h30</strong> — Routine posture matin<br>
+        · <strong style="color:var(--ink)">20h00</strong> — Bilan du jour si cases non cochées<br>
+        · <strong style="color:var(--ink)">21h30</strong> — Étirements soir
+      </div>
+      <div style="font-size:11px;margin-bottom:12px" id="notif-status">Non activés</div>
+      <button id="notif-btn" onclick="toggleNotifs()" style="width:100%;padding:13px;background:var(--jade);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.06em;color:#fff;cursor:pointer">Activer les rappels</button>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">⚠️ L'app doit être ouverte dans Chrome pour recevoir les rappels. Pour des notifications même app fermée, installe-la via "Ajouter à l'écran d'accueil".</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">☁️ SYNCHRONISATION CLOUD</div></div>
+    <div class="card-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">Connecte ton app à JSONBin pour synchroniser tes données entre ton téléphone et ton PC.</div>
+      <div style="font-size:12px;margin-bottom:8px">
+        <strong style="color:var(--ink)">Statut :</strong> <span id="cloud-status" style="color:var(--muted)">Non configuré</span>
+      </div>
+      <button onclick="showSetup()" style="width:100%;padding:13px;background:var(--ice);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.06em;color:#fff;cursor:pointer">⚙️ Configurer la synchro</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">📋 COPIER MON BILAN</div></div>
+    <div class="card-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">Génère un résumé de ta journée à coller dans Claude pour avoir un suivi personnalisé.</div>
+      <button onclick="copyBilan()" style="width:100%;padding:14px;background:var(--jade);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.06em;color:#fff;cursor:pointer" id="bilan-btn">📋 Copier mon bilan du jour</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-title">🚨 SI TU LÂCHES</div></div>
+    <div class="card-body">
+      <div class="proto"><div class="proto-head"><span class="proto-num">1J</span><span class="proto-title">Pause 1 jour</span></div><div class="proto-desc">Normal. Streak en pause, pas mort.</div><div class="proto-act">→ Demain : 2 cases avant 18h</div></div>
+      <div class="proto"><div class="proto-head"><span class="proto-num">3J</span><span class="proto-title">Pause 2–3 jours</span></div><div class="proto-desc">Moment dangereux. Résiste à la rationalisation.</div><div class="proto-act">→ Ce soir : 20 pompes seulement</div></div>
+      <div class="proto"><div class="proto-head"><span class="proto-num">1S</span><span class="proto-title">Pause 1 semaine</span></div><div class="proto-desc">Ne pas essayer de tout reprendre d\'un coup.</div><div class="proto-act">→ 1 séance de 15 min. Pas plus.</div></div>
+      <div class="proto" style="border-left-color:var(--jade)"><div class="proto-head"><span class="proto-num" style="color:var(--jade)">✓</span><span class="proto-title" style="color:var(--jade)">Règle universelle</span></div><div class="proto-desc">Jamais de remise à zéro. Aujourd'hui compte. Pas hier.</div><div class="proto-act" style="background:var(--jbg);color:var(--jade)">→ Ouvrir cette app. Cocher 1 case.</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <div class="bn active" id="bn1" onclick="sw(1,this)"><div class="bn-ico">📋</div><div class="bn-lbl">Jour</div></div>
+  <div class="bn" id="bn2" onclick="sw(2,this)"><div class="bn-ico">➕</div><div class="bn-lbl">Ajouter</div></div>
+  <div class="bn" id="bn3" onclick="sw(3,this)"><div class="bn-ico">🍽</div><div class="bn-lbl">Repas</div></div>
+  <div class="bn" id="bn4" onclick="sw(4,this)"><div class="bn-ico">💪</div><div class="bn-lbl">Sport</div></div>
+  <div class="bn" id="bn5" onclick="sw(5,this)"><div class="bn-ico">⋯</div><div class="bn-lbl">Plus</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- SETUP MODAL -->
+<div id="setup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--w);border-radius:16px;padding:24px;width:100%;max-width:400px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.06em;margin-bottom:6px">☁️ CONFIG CLOUD SYNC</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6">
+      1. Va sur <strong>jsonbin.io</strong> → crée un compte gratuit<br>
+      2. Clique <strong>NEW BIN</strong> → mets <code style="background:var(--soft);padding:1px 5px;border-radius:4px">{}</code> dedans → Save<br>
+      3. Copie le <strong>BIN ID</strong> (ex: 64a3f...)<br>
+      4. Va dans <strong>API Keys</strong> → copie ta <strong>Master Key</strong>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.08em">BIN ID</div>
+      <input id="inp-binid" type="text" placeholder="64a3f1b2c3d4e5f6..." style="width:100%;padding:13px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;font-family:monospace;outline:none;background:var(--soft)">
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.08em">MASTER KEY</div>
+      <input id="inp-apikey" type="password" placeholder="$2a$10$..." style="width:100%;padding:13px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;font-family:monospace;outline:none;background:var(--soft)">
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="hideSetup()" style="flex:1;padding:13px;background:var(--soft);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0.06em;color:var(--muted);cursor:pointer">Annuler</button>
+      <button onclick="saveSetup()" style="flex:2;padding:13px;background:var(--fire);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.06em;color:#fff;cursor:pointer"><span id="setup-btn-lbl">Connecter</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DB=[
+  {n:'Tajine poulet-olives',c:'Plats marocains',k:130,u:'g',x:'300g = 390 kcal'},
+  {n:'Tajine kefta-tomates',c:'Plats marocains',k:160,u:'g',x:'300g = 480 kcal'},
+  {n:'Tajine agneau-légumes',c:'Plats marocains',k:145,u:'g'},
+  {n:'Couscous légumes',c:'Plats marocains',k:110,u:'g',x:'350g = 385 kcal'},
+  {n:'Couscous poulet',c:'Plats marocains',k:130,u:'g',x:'350g = 455 kcal'},
+  {n:'Couscous agneau',c:'Plats marocains',k:165,u:'g'},
+  {n:'Harira',c:'Plats marocains',k:55,u:'g',x:'bol 250g = 138 kcal'},
+  {n:'Bessara soupe fèves',c:'Plats marocains',k:70,u:'g'},
+  {n:'Rfissa',c:'Plats marocains',k:180,u:'g'},
+  {n:'Pastilla poulet',c:'Plats marocains',k:230,u:'g',x:'200g = 460 kcal'},
+  {n:'Kefta grillée',c:'Viandes',k:250,u:'g'},
+  {n:'Kefta sauce tomate',c:'Plats marocains',k:145,u:'g'},
+  {n:'Méchoui agneau',c:'Viandes',k:200,u:'g'},
+  {n:'Zaalouk aubergine',c:'Légumes',k:65,u:'g'},
+  {n:'Taktouka poivrons',c:'Légumes',k:55,u:'g'},
+  {n:'Khobz pain marocain',c:'Pain',k:265,u:'g',x:'tranche 60g = 159 kcal'},
+  {n:'Msemen',c:'Pain',k:330,u:'g',x:'1 pièce 80g = 264 kcal'},
+  {n:'Meloui',c:'Pain',k:320,u:'g',x:'1 pièce 70g = 224 kcal'},
+  {n:'Harcha',c:'Pain',k:350,u:'g',x:'1 pièce 80g = 280 kcal'},
+  {n:'Baghrir crêpe 1000 trous',c:'Pain',k:195,u:'g',x:'1 pièce 60g = 117 kcal'},
+  {n:'Batbout pain vapeur',c:'Pain',k:250,u:'g'},
+  {n:'Pain complet',c:'Pain',k:247,u:'g',x:'tranche 30g = 74 kcal'},
+  {n:'Sfenj beignet',c:'Pain',k:340,u:'g',x:'1 pièce 60g = 204 kcal'},
+  {n:'Baguette',c:'Pain',k:270,u:'g',x:'quart 65g = 175 kcal'},
+  {n:'Brioche',c:'Pain',k:340,u:'g',x:'tranche 40g = 136 kcal'},
+  {n:'Pain de mie',c:'Pain',k:265,u:'g',x:'tranche 25g = 66 kcal'},
+  {n:'Amlou',c:'Petit déj',k:580,u:'g',x:'1 càs 15g = 87 kcal'},
+  {n:'Miel',c:'Petit déj',k:304,u:'g',x:'1 càs 15g = 46 kcal'},
+  {n:'Jben fromage frais',c:'Fromages',k:100,u:'g'},
+  {n:'Beurre',c:'Graisses',k:717,u:'g',x:'1 càs 10g = 72 kcal'},
+  {n:'Blanc de poulet grillé',c:'Viandes',k:110,u:'g'},
+  {n:'Émincés de poulet nature',c:'Viandes',k:110,u:'g',x:'150g = 165 kcal'},
+  {n:'Émincés de poulet sauce crème',c:'Viandes',k:145,u:'g'},
+  {n:'Émincés de dinde',c:'Viandes',k:105,u:'g'},
+  {n:'Cordon bleu poulet',c:'Viandes',k:220,u:'g',x:'1 pièce 100g = 220 kcal'},
+  {n:'Cordon bleu veau',c:'Viandes',k:235,u:'g'},
+  {n:'Escalope panée',c:'Viandes',k:230,u:'g'},
+  {n:'Nuggets poulet',c:'Viandes',k:250,u:'g',x:'6 pièces 100g = 250 kcal'},
+  {n:'Steak haché 5% MG',c:'Viandes',k:145,u:'g'},
+  {n:'Steak haché 15% MG',c:'Viandes',k:220,u:'g'},
+  {n:'Poulet rôti sans peau',c:'Viandes',k:165,u:'g'},
+  {n:'Poulet rôti avec peau',c:'Viandes',k:215,u:'g'},
+  {n:'Agneau grillé',c:'Viandes',k:235,u:'g'},
+  {n:'Merguez',c:'Viandes',k:330,u:'g',x:'1 pièce 50g = 165 kcal'},
+  {n:'Sardines grillées',c:'Poissons',k:140,u:'g'},
+  {n:'Sardines en conserve',c:'Poissons',k:135,u:'g'},
+  {n:'Thon en conserve',c:'Poissons',k:120,u:'g'},
+  {n:'Saumon grillé',c:'Poissons',k:175,u:'g'},
+  {n:'Poisson blanc grillé',c:'Poissons',k:105,u:'g'},
+  {n:'Fish fingers',c:'Poissons',k:205,u:'g',x:'4 bâtonnets = 205 kcal'},
+  {n:'Riz blanc cuit',c:'Féculents',k:130,u:'g'},
+  {n:'Riz complet cuit',c:'Féculents',k:123,u:'g'},
+  {n:'Semoule cuite',c:'Féculents',k:112,u:'g'},
+  {n:'Pâtes cuites nature',c:'Pâtes',k:131,u:'g'},
+  {n:'Pâtes beurre',c:'Pâtes',k:175,u:'g',x:'200g = 350 kcal'},
+  {n:'Pâtes sauce tomate',c:'Pâtes',k:120,u:'g',x:'300g = 360 kcal'},
+  {n:'Pâtes bolognaise',c:'Pâtes',k:155,u:'g',x:'350g = 543 kcal'},
+  {n:'Pâtes carbonara',c:'Pâtes',k:180,u:'g',x:'300g = 540 kcal'},
+  {n:'Pâtes pesto',c:'Pâtes',k:195,u:'g'},
+  {n:'Pâtes crème poulet',c:'Pâtes',k:165,u:'g'},
+  {n:'Pâtes thon tomate',c:'Pâtes',k:135,u:'g',x:'option étudiant ✓'},
+  {n:'Pâtes fromage',c:'Pâtes',k:185,u:'g'},
+  {n:'Lasagnes',c:'Pâtes',k:155,u:'g',x:'300g = 465 kcal'},
+  {n:'Ramen instantané',c:'Pâtes',k:430,u:'g',x:'sachet 80g = 344 kcal'},
+  {n:'Lentilles cuites',c:'Féculents',k:116,u:'g'},
+  {n:'Pois chiches cuits',c:'Féculents',k:164,u:'g'},
+  {n:'Patate douce',c:'Féculents',k:86,u:'g'},
+  {n:'Pomme de terre bouillie',c:'Féculents',k:77,u:'g'},
+  {n:'Frites',c:'Féculents',k:312,u:'g',x:'150g = 468 kcal'},
+  {n:'Tomates',c:'Légumes',k:18,u:'g'},
+  {n:'Courgettes',c:'Légumes',k:17,u:'g'},
+  {n:'Carottes',c:'Légumes',k:41,u:'g'},
+  {n:'Épinards',c:'Légumes',k:23,u:'g'},
+  {n:'Salade verte',c:'Légumes',k:15,u:'g'},
+  {n:'Légumes surgelés vapeur',c:'Légumes',k:40,u:'g',x:'200g = 80 kcal ✓'},
+  {n:'Orange',c:'Fruits',k:47,u:'g'},
+  {n:'Datte',c:'Fruits',k:282,u:'g',x:'1 datte 8g = 23 kcal'},
+  {n:'Banane',c:'Fruits',k:89,u:'g',x:'1 banane 120g = 107 kcal'},
+  {n:'Pomme',c:'Fruits',k:52,u:'g'},
+  {n:'Pastèque',c:'Fruits',k:30,u:'g'},
+  {n:'Avocat',c:'Fruits',k:160,u:'g',x:'1/2 = 112 kcal'},
+  {n:'Fraises',c:'Fruits',k:32,u:'g'},
+  {n:'Oeuf entier',c:'Oeufs',k:143,u:'g',x:'1 oeuf 55g = 79 kcal'},
+  {n:'Omelette 2 oeufs',c:'Oeufs',k:148,u:'g'},
+  {n:'Oeufs brouillés',c:'Oeufs',k:155,u:'g'},
+  {n:'Yaourt nature 0%',c:'Laitages',k:36,u:'g',x:'pot 125g = 45 kcal ✓'},
+  {n:'Fromage blanc 0%',c:'Fromages',k:45,u:'g',x:'pot 100g = 45 kcal ✓'},
+  {n:'Fromage kiri',c:'Fromages',k:250,u:'g',x:'1 portion 19g = 48 kcal'},
+  {n:'Vache qui rit',c:'Fromages',k:230,u:'g',x:'1 portion 18g = 41 kcal'},
+  {n:'Emmental râpé',c:'Fromages',k:395,u:'g',x:'20g = 79 kcal'},
+  {n:'Mozzarella',c:'Fromages',k:255,u:'g'},
+  {n:'Feta',c:'Fromages',k:265,u:'g',x:'30g = 80 kcal'},
+  {n:'Camembert',c:'Fromages',k:300,u:'g'},
+  {n:'Huile olive',c:'Graisses',k:884,u:'g',x:'1 càs 14g = 124 kcal'},
+  {n:'Beurre de cacahuète',c:'Graisses',k:588,u:'g',x:'1 càc 10g = 59 kcal'},
+  {n:'Nutella',c:'Pâtes à tartiner',k:539,u:'g',x:'1 càs 15g = 81 kcal'},
+  {n:'Confiture fraise',c:'Pâtes à tartiner',k:250,u:'g',x:'1 càs 15g = 38 kcal'},
+  {n:'Confiture abricot',c:'Pâtes à tartiner',k:240,u:'g'},
+  {n:'Lotus speculoos',c:'Pâtes à tartiner',k:550,u:'g',x:'1 càs 15g = 83 kcal'},
+  {n:'Tahini sésame',c:'Pâtes à tartiner',k:595,u:'g'},
+  {n:'Labné fromage égoutté',c:'Pâtes à tartiner',k:140,u:'g'},
+  {n:'Mayonnaise',c:'Sauces',k:680,u:'g',x:'1 càs 15g = 102 kcal'},
+  {n:'Ketchup',c:'Sauces',k:100,u:'g',x:'1 càs = 15 kcal'},
+  {n:'Moutarde',c:'Sauces',k:66,u:'g',x:'quasi zéro ✓'},
+  {n:'Sauce tomate',c:'Sauces',k:50,u:'g'},
+  {n:'Sauce soja',c:'Sauces',k:60,u:'g',x:'✓ très peu calorique'},
+  {n:'Crème fraîche',c:'Sauces',k:290,u:'g',x:'1 càs 20g = 58 kcal'},
+  {n:'Pesto',c:'Sauces',k:460,u:'g',x:'1 càs 15g = 69 kcal'},
+  {n:'Harissa',c:'Sauces',k:50,u:'g'},
+  {n:'Cornes de gazelle',c:'Pâtisseries maroc',k:420,u:'g',x:'1 pièce 30g = 126 kcal'},
+  {n:'Chebakia',c:'Pâtisseries maroc',k:480,u:'g',x:'1 pièce 40g = 192 kcal'},
+  {n:'Sellou sfouf',c:'Pâtisseries maroc',k:490,u:'g',x:'30g = 147 kcal'},
+  {n:'Makrout',c:'Pâtisseries maroc',k:410,u:'g',x:'1 pièce 40g = 164 kcal'},
+  {n:'Ghriba sablé coco',c:'Pâtisseries maroc',k:445,u:'g',x:'1 pièce 25g = 111 kcal'},
+  {n:'Kaab el ghazal',c:'Pâtisseries maroc',k:415,u:'g'},
+  {n:'Cigares aux amandes',c:'Pâtisseries maroc',k:440,u:'g'},
+  {n:'Zlabia',c:'Pâtisseries maroc',k:450,u:'g'},
+  {n:'Fekkas',c:'Pâtisseries maroc',k:420,u:'g',x:'1 pièce 15g = 63 kcal'},
+  {n:'Croissant',c:'Boulangerie',k:406,u:'g',x:'1 pièce 50g = 203 kcal'},
+  {n:'Pain au chocolat',c:'Boulangerie',k:390,u:'g',x:'1 pièce 60g = 234 kcal'},
+  {n:'Éclair chocolat',c:'Boulangerie',k:295,u:'g',x:'1 pièce 80g = 236 kcal'},
+  {n:'Mille-feuille',c:'Boulangerie',k:380,u:'g'},
+  {n:'Tarte citron meringuée',c:'Boulangerie',k:290,u:'g'},
+  {n:'Brownie',c:'Boulangerie',k:415,u:'g',x:'1 carré 60g = 249 kcal'},
+  {n:'Cheesecake',c:'Boulangerie',k:325,u:'g',x:'1 part 120g = 390 kcal'},
+  {n:'Cookies chocolat',c:'Boulangerie',k:488,u:'g',x:'1 cookie 30g = 146 kcal'},
+  {n:'Donuts',c:'Boulangerie',k:380,u:'g',x:'1 donut 60g = 228 kcal'},
+  {n:'Madeleine',c:'Boulangerie',k:410,u:'g',x:'1 pièce 30g = 123 kcal'},
+  {n:'Chawarma poulet',c:'Fast-food',k:195,u:'g',x:'sandwich 220g = 429 kcal'},
+  {n:'Chawarma viande',c:'Fast-food',k:220,u:'g'},
+  {n:'Sandwich kefta',c:'Fast-food',k:240,u:'g'},
+  {n:'Tacos marocain',c:'Fast-food',k:260,u:'g',x:'250g = 650 kcal'},
+  {n:'Pizza marocaine',c:'Fast-food',k:235,u:'g'},
+  {n:'Brochette poulet',c:'Fast-food',k:165,u:'g'},
+  {n:'Big Mac',c:'Fast-food',k:257,u:'g',x:'215g = 552 kcal'},
+  {n:'McChicken',c:'Fast-food',k:240,u:'g'},
+  {n:'KFC poulet frit',c:'Fast-food',k:280,u:'g'},
+  {n:'Hamburger classique',c:'Fast-food',k:260,u:'g'},
+  {n:'Oreo',c:'Biscuits',k:471,u:'g',x:'1 biscuit 11g = 52 kcal'},
+  {n:'Kinder Bueno',c:'Biscuits',k:546,u:'g',x:'1 barre 43g = 235 kcal'},
+  {n:'Twix',c:'Biscuits',k:495,u:'g',x:'1 barre 50g = 248 kcal'},
+  {n:'Kit Kat',c:'Biscuits',k:518,u:'g'},
+  {n:'Mars Snickers',c:'Biscuits',k:480,u:'g',x:'1 barre 50g = 240 kcal'},
+  {n:'Chocolat au lait',c:'Biscuits',k:535,u:'g',x:'carré 10g = 54 kcal'},
+  {n:'Chocolat noir 70%',c:'Biscuits',k:598,u:'g'},
+  {n:'M&Ms',c:'Biscuits',k:491,u:'g',x:'sachet 45g = 221 kcal'},
+  {n:'Chips sachet',c:'Biscuits',k:520,u:'g',x:'sachet 30g = 156 kcal'},
+  {n:'Bonbons Haribo',c:'Biscuits',k:340,u:'g',x:'30g = 102 kcal'},
+  {n:'Glace Magnum',c:'Biscuits',k:270,u:'g',x:'1 barre = 324 kcal'},
+  {n:'Glace Cornetto',c:'Biscuits',k:230,u:'g'},
+  {n:'Popcorn sucré',c:'Biscuits',k:420,u:'g',x:'30g = 126 kcal'},
+  {n:'Eau plate',c:'Boissons',k:0,u:'ml',x:'✓ zéro calorie'},
+  {n:'Oulmès Sidi Ali gazeuse',c:'Boissons',k:0,u:'ml',x:'✓ zéro calorie'},
+  {n:'Café noir espresso',c:'Boissons',k:2,u:'ml',x:'✓ quasi zéro'},
+  {n:'Cappuccino sans sucre',c:'Boissons',k:35,u:'ml',x:'150ml = 53 kcal ✓'},
+  {n:'Café au lait',c:'Boissons',k:40,u:'ml',x:'200ml = 80 kcal'},
+  {n:'Thé menthe sans sucre',c:'Boissons',k:1,u:'ml',x:'✓ quasi zéro'},
+  {n:'Thé menthe 1 sucre',c:'Boissons',k:18,u:'ml',x:'verre 150ml = 27 kcal'},
+  {n:'Thé menthe 2 sucres',c:'Boissons',k:30,u:'ml'},
+  {n:'Thé menthe traditionnel',c:'Boissons',k:40,u:'ml',x:'verre 150ml = 60 kcal'},
+  {n:'Lben lait fermenté',c:'Boissons',k:40,u:'ml',x:'200ml = 80 kcal'},
+  {n:'Lait entier',c:'Boissons',k:61,u:'ml',x:'200ml = 122 kcal'},
+  {n:'Jus orange frais',c:'Boissons',k:45,u:'ml',x:'200ml = 90 kcal'},
+  {n:'Jus Rania Del Valle',c:'Boissons',k:48,u:'ml',x:'brique 200ml = 96 kcal'},
+  {n:'Coca-cola',c:'Boissons',k:42,u:'ml',x:'canette 330ml = 139 kcal'},
+  {n:'Coca-cola Zero',c:'Boissons',k:0,u:'ml',x:'✓ zéro calorie'},
+  {n:'Pepsi',c:'Boissons',k:41,u:'ml'},
+  {n:'Fanta',c:'Boissons',k:44,u:'ml',x:'330ml = 145 kcal'},
+  {n:'Sprite',c:'Boissons',k:40,u:'ml'},
+  {n:'Hawai soda',c:'Boissons',k:42,u:'ml'},
+  {n:'Red Bull',c:'Boissons',k:45,u:'ml',x:'250ml = 113 kcal'},
+  {n:'Red Bull Sugar Free',c:'Boissons',k:3,u:'ml',x:'✓ quasi zéro'},
+  {n:'Monster Energy',c:'Boissons',k:44,u:'ml',x:'500ml = 220 kcal'},
+  {n:'Eau de coco',c:'Boissons',k:19,u:'ml',x:'330ml = 63 kcal ✓'},
+  {n:'Bubble tea lait milk tea',c:'Bubble Tea',k:75,u:'ml',x:'500ml = 375 kcal'},
+  {n:'Bubble tea lait taro',c:'Bubble Tea',k:80,u:'ml',x:'500ml = 400 kcal'},
+  {n:'Bubble tea lait matcha',c:'Bubble Tea',k:72,u:'ml'},
+  {n:'Bubble tea lait fraise',c:'Bubble Tea',k:78,u:'ml'},
+  {n:'Bubble tea lait chocolat',c:'Bubble Tea',k:82,u:'ml'},
+  {n:'Bubble tea lait caramel',c:'Bubble Tea',k:80,u:'ml'},
+  {n:'Bubble tea fruit mangue',c:'Bubble Tea',k:55,u:'ml',x:'500ml = 275 kcal'},
+  {n:'Bubble tea fruit fraise',c:'Bubble Tea',k:52,u:'ml'},
+  {n:'Bubble tea fruit passion',c:'Bubble Tea',k:50,u:'ml'},
+  {n:'Brown sugar milk tea',c:'Bubble Tea',k:90,u:'ml',x:'500ml = 450 kcal'},
+  {n:'Tiger milk tea',c:'Bubble Tea',k:88,u:'ml'},
+  {n:'Perles tapioca ajout',c:'Bubble Tea',k:335,u:'g',x:'60g = 201 kcal — à ajouter'},
+  {n:'Matcha latte froid',c:'Bubble Tea',k:65,u:'ml',x:'500ml = 325 kcal'},
+  {n:'Iced latte café glacé',c:'Cafés froids',k:40,u:'ml',x:'400ml = 160 kcal'},
+  {n:'Iced matcha latte',c:'Cafés froids',k:60,u:'ml'},
+  {n:'Iced chai latte',c:'Cafés froids',k:65,u:'ml'},
+  {n:'Frappuccino caramel',c:'Cafés froids',k:95,u:'ml',x:'500ml = 475 kcal'},
+  {n:'Frappuccino chocolat',c:'Cafés froids',k:100,u:'ml'},
+  {n:'Cold brew noir',c:'Cafés froids',k:2,u:'ml',x:'✓ quasi zéro'},
+  {n:'Dalgona coffee café fouetté',c:'Cafés froids',k:70,u:'ml',x:'300ml = 210 kcal'},
+  {n:'Smoothie mangue ananas',c:'Smoothies',k:65,u:'ml',x:'300ml = 195 kcal'},
+  {n:'Smoothie fraise banane',c:'Smoothies',k:70,u:'ml'},
+  {n:'Smoothie vert épinards',c:'Smoothies',k:30,u:'ml',x:'✓ sain'},
+  {n:'Milkshake vanille',c:'Smoothies',k:85,u:'ml',x:'400ml = 340 kcal'},
+  {n:'Milkshake chocolat',c:'Smoothies',k:95,u:'ml'},
+  {n:'Milkshake Oreo',c:'Smoothies',k:105,u:'ml'},
+  {n:'Pizza margherita',c:'Italie',k:235,u:'g',x:'1 part 100g = 235 kcal'},
+  {n:'Pasta carbonara',c:'Italie',k:180,u:'g',x:'300g = 540 kcal'},
+  {n:'Pasta bolognaise',c:'Italie',k:155,u:'g'},
+  {n:'Tiramisu',c:'Italie',k:280,u:'g',x:'120g = 336 kcal'},
+  {n:'Pad thaï',c:'Thaïlande',k:160,u:'g',x:'300g = 480 kcal'},
+  {n:'Poulet tikka masala',c:'Inde',k:130,u:'g'},
+  {n:'Naan',c:'Inde',k:310,u:'g',x:'1 pièce 90g = 279 kcal'},
+  {n:'Biryani poulet',c:'Inde',k:175,u:'g'},
+  {n:'Ramen poulet',c:'Japon',k:95,u:'g',x:'bol 450g = 428 kcal'},
+  {n:'Sushi saumon pièce',c:'Japon',k:40,u:'g'},
+  {n:'Gyoza raviolis grillés',c:'Japon',k:195,u:'g'},
+  {n:'Tacos poulet',c:'Mexique',k:195,u:'g',x:'2 tacos 200g = 390 kcal'},
+  {n:'Burrito complet',c:'Mexique',k:210,u:'g'},
+  {n:'Guacamole',c:'Mexique',k:160,u:'g',x:'2 càs = 96 kcal'},
+  {n:'Shawarma libanais',c:'Liban',k:200,u:'g'},
+  {n:'Hummus',c:'Liban',k:166,u:'g',x:'2 càs = 100 kcal'},
+  {n:'Falafel',c:'Liban',k:330,u:'g',x:'3 pièces = 297 kcal'},
+  {n:'Boîte ravioli sauce tomate',c:'Repas rapide',k:95,u:'g',x:'boîte 400g = 380 kcal'},
+  {n:'Boîte cassoulet',c:'Repas rapide',k:130,u:'g'},
+  {n:'Boîte lentilles cuisinées',c:'Repas rapide',k:90,u:'g',x:'✓ sain et économique'},
+  {n:'Soupe instantanée',c:'Repas rapide',k:35,u:'g'},
+  {n:'Flocons avoine',c:'Repas rapide',k:360,u:'g',x:'bol 60g = 216 kcal ✓'},
+  {n:'Jambon blanc',c:'Charcuterie',k:107,u:'g',x:'1 tranche 30g = 32 kcal'},
+  {n:'Saucisson sec',c:'Charcuterie',k:430,u:'g',x:'3 tranches 30g = 129 kcal'},
+  {n:'Chorizo',c:'Charcuterie',k:455,u:'g'},
+  {n:'Lardons fumés',c:'Charcuterie',k:335,u:'g',x:'50g = 168 kcal'},
+  {n:'Bacon',c:'Charcuterie',k:320,u:'g',x:'2 tranches 30g = 96 kcal'},
+  {n:'Corn Flakes',c:'Céréales',k:357,u:'g',x:'bol 40g = 143 kcal'},
+  {n:'Muesli',c:'Céréales',k:370,u:'g',x:'bol 50g = 185 kcal'},
+  {n:'Granola',c:'Céréales',k:430,u:'g'},
+  {n:'Barre de céréales',c:'Céréales',k:390,u:'g',x:'1 barre 25g = 98 kcal'},
+,
+
+  // ── CÉRÉALES COMPLÈTES (marques et types) ──
+  {n:'Santé granola nature',c:'Céréales',k:420,u:'g',x:'bol 50g = 210 kcal'},
+  {n:'Santé granola chocolat',c:'Céréales',k:445,u:'g',x:'bol 50g = 223 kcal'},
+  {n:'Santé granola fruits rouges',c:'Céréales',k:415,u:'g',x:'bol 50g = 208 kcal'},
+  {n:'Granola miel noix',c:'Céréales',k:450,u:'g',x:'bol 50g = 225 kcal'},
+  {n:'Granola amandes',c:'Céréales',k:460,u:'g',x:'bol 50g = 230 kcal'},
+  {n:'Special K nature',c:'Céréales',k:372,u:'g',x:'bol 30g = 112 kcal'},
+  {n:'Special K chocolat',c:'Céréales',k:388,u:'g',x:'bol 30g = 116 kcal'},
+  {n:'Special K fruits rouges',c:'Céréales',k:368,u:'g'},
+  {n:'Corn Flakes Kellogg\'s',c:'Céréales',k:357,u:'g',x:'bol 40g = 143 kcal'},
+  {n:'Frosties Kellogg\'s',c:'Céréales',k:378,u:'g',x:'bol 40g = 151 kcal'},
+  {n:'Coco Pops',c:'Céréales',k:382,u:'g',x:'bol 30g = 115 kcal'},
+  {n:'Muesli suisse nature',c:'Céréales',k:362,u:'g',x:'bol 50g = 181 kcal'},
+  {n:'Muesli fruits secs',c:'Céréales',k:370,u:'g',x:'bol 50g = 185 kcal'},
+  {n:'Muesli croustillant',c:'Céréales',k:400,u:'g'},
+  {n:'Porridge flocons avoine nature',c:'Céréales',k:71,u:'g',x:'bol 250ml préparé = 177 kcal ✓'},
+  {n:'Porridge avoine miel',c:'Céréales',k:85,u:'g',x:'bol 250ml préparé = 213 kcal'},
+  {n:'Flocons avoine crus',c:'Céréales',k:360,u:'g',x:'60g sec = 216 kcal ✓'},
+  {n:'Weetabix',c:'Céréales',k:352,u:'g',x:'2 biscuits 37g = 130 kcal'},
+  {n:'All-Bran Kellogg\'s',c:'Céréales',k:290,u:'g',x:'bol 40g = 116 kcal'},
+  {n:'Cheerios',c:'Céréales',k:368,u:'g',x:'bol 30g = 110 kcal'},
+  {n:'Nesquik céréales chocolat',c:'Céréales',k:380,u:'g',x:'bol 30g = 114 kcal'},
+  {n:'Honey Bssnacks céréales miel',c:'Céréales',k:375,u:'g'},
+  {n:'Barre granola nature',c:'Céréales',k:390,u:'g',x:'1 barre 25g = 98 kcal'},
+  {n:'Barre granola chocolat',c:'Céréales',k:420,u:'g',x:'1 barre 25g = 105 kcal'},
+  {n:'Barre protéinée Nature Valley',c:'Céréales',k:450,u:'g',x:'1 barre 42g = 189 kcal'},
+  {n:'Barre avoine raisins',c:'Céréales',k:380,u:'g'},
+
+,
+
+  // ── LÉGUMES DÉTAILLÉS ──
+  {n:'Tomates cerises',c:'Légumes',k:18,u:'g',x:'10 tomates 100g = 18 kcal'},
+  {n:'Tomates rondes',c:'Légumes',k:18,u:'g'},
+  {n:'Tomates allongées (Roma)',c:'Légumes',k:17,u:'g'},
+  {n:'Tomates coeur de boeuf',c:'Légumes',k:19,u:'g'},
+  {n:'Poivron rouge',c:'Légumes',k:31,u:'g'},
+  {n:'Poivron vert',c:'Légumes',k:20,u:'g'},
+  {n:'Poivron jaune',c:'Légumes',k:27,u:'g'},
+  {n:'Courgette verte',c:'Légumes',k:17,u:'g'},
+  {n:'Courgette jaune',c:'Légumes',k:17,u:'g'},
+  {n:'Aubergine',c:'Légumes',k:25,u:'g'},
+  {n:'Concombre',c:'Légumes',k:15,u:'g'},
+  {n:'Salade iceberg',c:'Légumes',k:14,u:'g'},
+  {n:'Salade romaine',c:'Légumes',k:17,u:'g'},
+  {n:'Roquette',c:'Légumes',k:25,u:'g'},
+  {n:'Épinards frais',c:'Légumes',k:23,u:'g'},
+  {n:'Épinards surgelés',c:'Légumes',k:20,u:'g'},
+  {n:'Brocoli',c:'Légumes',k:34,u:'g',x:'fleurettes 200g = 68 kcal'},
+  {n:'Chou-fleur',c:'Légumes',k:25,u:'g'},
+  {n:'Chou blanc',c:'Légumes',k:25,u:'g'},
+  {n:'Chou rouge',c:'Légumes',k:31,u:'g'},
+  {n:'Chou romanesco',c:'Légumes',k:27,u:'g'},
+  {n:'Haricots verts',c:'Légumes',k:31,u:'g',x:'200g = 62 kcal'},
+  {n:'Haricots blancs cuits',c:'Légumes',k:127,u:'g'},
+  {n:'Petits pois cuits',c:'Légumes',k:84,u:'g'},
+  {n:'Petits pois surgelés',c:'Légumes',k:77,u:'g'},
+  {n:'Maïs en grains',c:'Légumes',k:96,u:'g'},
+  {n:'Maïs en épi',c:'Légumes',k:86,u:'g'},
+  {n:'Oignon rouge',c:'Légumes',k:40,u:'g'},
+  {n:'Oignon blanc',c:'Légumes',k:42,u:'g'},
+  {n:'Oignon vert (ciboulette)',c:'Légumes',k:30,u:'g'},
+  {n:'Ail',c:'Légumes',k:149,u:'g',x:'1 gousse 5g = 7 kcal'},
+  {n:'Echalote',c:'Légumes',k:72,u:'g',x:'1 échalote 20g = 14 kcal'},
+  {n:'Poireau',c:'Légumes',k:31,u:'g'},
+  {n:'Céleri branche',c:'Légumes',k:16,u:'g'},
+  {n:'Céleri rave',c:'Légumes',k:42,u:'g'},
+  {n:'Fenouil',c:'Légumes',k:31,u:'g'},
+  {n:'Betterave rouge cuite',c:'Légumes',k:44,u:'g'},
+  {n:'Betterave crue',c:'Légumes',k:43,u:'g'},
+  {n:'Radis',c:'Légumes',k:16,u:'g'},
+  {n:'Navet',c:'Légumes',k:28,u:'g'},
+  {n:'Panais',c:'Légumes',k:75,u:'g'},
+  {n:'Asperges',c:'Légumes',k:20,u:'g'},
+  {n:'Artichaut cuit',c:'Légumes',k:53,u:'g'},
+  {n:'Champignons de Paris',c:'Légumes',k:22,u:'g'},
+  {n:'Champignons shiitake',c:'Légumes',k:34,u:'g'},
+  {n:'Champignons portobello',c:'Légumes',k:22,u:'g'},
+  {n:'Avocat',c:'Légumes',k:160,u:'g',x:'1/2 avocat 70g = 112 kcal'},
+  {n:'Olives noires',c:'Légumes',k:155,u:'g',x:'10 olives 30g = 47 kcal'},
+  {n:'Olives vertes',c:'Légumes',k:145,u:'g',x:'10 olives 30g = 44 kcal'},
+  {n:'Cornichons',c:'Légumes',k:11,u:'g',x:'quasi zéro calorie'},
+  {n:'Câpres',c:'Légumes',k:23,u:'g'},
+  {n:'Piment vert',c:'Légumes',k:20,u:'g'},
+  {n:'Piment rouge',c:'Légumes',k:31,u:'g'},
+  {n:'Gingembre frais',c:'Légumes',k:80,u:'g',x:'1 cm 5g = 4 kcal'},
+  {n:'Persil frais',c:'Légumes',k:36,u:'g',x:'quasi zéro sur les quantités utilisées'},
+  {n:'Coriandre fraiche',c:'Légumes',k:23,u:'g',x:'quasi zéro'},
+  {n:'Menthe fraiche',c:'Légumes',k:44,u:'g'},
+  {n:'Basilic frais',c:'Légumes',k:23,u:'g'},
+  {n:'Potiron',c:'Légumes',k:26,u:'g'},
+  {n:'Courgette ronde',c:'Légumes',k:17,u:'g'},
+  {n:'Bette (blette)',c:'Légumes',k:19,u:'g'},
+  {n:'Endive',c:'Légumes',k:17,u:'g'},
+  {n:'Cresson',c:'Légumes',k:32,u:'g'},
+  {n:'Mache',c:'Légumes',k:21,u:'g'},
+  // ── FRUITS DÉTAILLÉS ──
+  {n:'Fraises',c:'Fruits',k:32,u:'g',x:'10 fraises 100g = 32 kcal'},
+  {n:'Framboises',c:'Fruits',k:52,u:'g'},
+  {n:'Myrtilles',c:'Fruits',k:57,u:'g'},
+  {n:'Cerises',c:'Fruits',k:63,u:'g',x:'10 cerises 60g = 38 kcal'},
+  {n:'Raisin blanc',c:'Fruits',k:67,u:'g'},
+  {n:'Raisin noir',c:'Fruits',k:69,u:'g'},
+  {n:'Kiwi',c:'Fruits',k:61,u:'g',x:'1 kiwi 80g = 49 kcal'},
+  {n:'Poire',c:'Fruits',k:57,u:'g'},
+  {n:'Mangue',c:'Fruits',k:65,u:'g',x:'1/2 mangue 150g = 98 kcal'},
+  {n:'Ananas',c:'Fruits',k:50,u:'g'},
+  {n:'Papaye',c:'Fruits',k:43,u:'g'},
+  {n:'Clémentine',c:'Fruits',k:47,u:'g',x:'1 clémentine 80g = 38 kcal'},
+  {n:'Citron',c:'Fruits',k:29,u:'g',x:'quasi zéro dans les plats'},
+  {n:'Pamplemousse',c:'Fruits',k:42,u:'g'},
+  {n:'Noix de coco (pulpe)',c:'Fruits',k:354,u:'g',x:'30g = 106 kcal'},
+  {n:'Figues seches',c:'Fruits',k:249,u:'g',x:'2 figues 40g = 100 kcal'},
+  {n:'Raisins secs',c:'Fruits',k:299,u:'g',x:'1 càs 20g = 60 kcal'},
+  {n:'Abricots secs',c:'Fruits',k:241,u:'g',x:'3 abricots 30g = 72 kcal'},
+
+,
+
+  // ── LÉGUMES — MODES DE CUISSON ──
+  {n:'Aubergine crue',c:'Légumes',k:25,u:'g'},
+  {n:'Aubergine grillée',c:'Légumes',k:35,u:'g',x:'200g = 70 kcal'},
+  {n:'Aubergine rôtie four',c:'Légumes',k:33,u:'g'},
+  {n:'Aubergine sautée huile',c:'Légumes',k:85,u:'g',x:'absorbe beaucoup huile'},
+  {n:'Aubergine vapeur',c:'Légumes',k:25,u:'g'},
+  {n:'Courgette crue',c:'Légumes',k:17,u:'g'},
+  {n:'Courgette grillée',c:'Légumes',k:22,u:'g'},
+  {n:'Courgette sautée',c:'Légumes',k:45,u:'g'},
+  {n:'Courgette vapeur',c:'Légumes',k:18,u:'g'},
+  {n:'Courgette four',c:'Légumes',k:25,u:'g'},
+  {n:'Tomate crue',c:'Légumes',k:18,u:'g'},
+  {n:'Tomate grillée',c:'Légumes',k:24,u:'g'},
+  {n:'Tomate confite four',c:'Légumes',k:65,u:'g'},
+  {n:'Tomate cuite en sauce',c:'Légumes',k:35,u:'g'},
+  {n:'Poivron cru',c:'Légumes',k:28,u:'g'},
+  {n:'Poivron grillé',c:'Légumes',k:35,u:'g'},
+  {n:'Poivron rôti four',c:'Légumes',k:38,u:'g'},
+  {n:'Brocoli cru',c:'Légumes',k:34,u:'g'},
+  {n:'Brocoli vapeur',c:'Légumes',k:35,u:'g'},
+  {n:'Brocoli rôti four',c:'Légumes',k:45,u:'g'},
+  {n:'Chou-fleur cru',c:'Légumes',k:25,u:'g'},
+  {n:'Chou-fleur vapeur',c:'Légumes',k:26,u:'g'},
+  {n:'Chou-fleur rôti',c:'Légumes',k:40,u:'g'},
+  {n:'Haricots verts crus',c:'Légumes',k:31,u:'g'},
+  {n:'Haricots verts vapeur',c:'Légumes',k:32,u:'g'},
+  {n:'Haricots verts sautés',c:'Légumes',k:45,u:'g'},
+  {n:'Carottes crues',c:'Légumes',k:41,u:'g'},
+  {n:'Carottes cuites',c:'Légumes',k:35,u:'g'},
+  {n:'Carottes vapeur',c:'Légumes',k:35,u:'g'},
+  {n:'Carottes rôties',c:'Légumes',k:50,u:'g'},
+  {n:'Épinards crus',c:'Légumes',k:23,u:'g'},
+  {n:'Épinards cuits vapeur',c:'Légumes',k:24,u:'g'},
+  {n:'Épinards sautés ail',c:'Légumes',k:45,u:'g'},
+  {n:'Champignons crus',c:'Légumes',k:22,u:'g'},
+  {n:'Champignons grillés',c:'Légumes',k:25,u:'g'},
+  {n:'Champignons sautés beurre',c:'Légumes',k:75,u:'g'},
+  {n:'Champignons sautés huile',c:'Légumes',k:70,u:'g'},
+  {n:'Oignon cru',c:'Légumes',k:40,u:'g'},
+  {n:'Oignon caramélisé',c:'Légumes',k:85,u:'g'},
+  {n:'Oignon grillé',c:'Légumes',k:50,u:'g'},
+  {n:'Poireau cuit vapeur',c:'Légumes',k:28,u:'g'},
+  {n:'Poireau sauté',c:'Légumes',k:55,u:'g'},
+  {n:'Betterave cuite',c:'Légumes',k:44,u:'g'},
+  {n:'Céleri cuit',c:'Légumes',k:18,u:'g'},
+  {n:'Fenouil cru',c:'Légumes',k:31,u:'g'},
+  {n:'Fenouil grillé',c:'Légumes',k:38,u:'g'},
+  {n:'Asperges vapeur',c:'Légumes',k:22,u:'g'},
+  {n:'Asperges grillées',c:'Légumes',k:28,u:'g'},
+  {n:'Potiron cuit',c:'Légumes',k:26,u:'g'},
+  {n:'Potiron rôti',c:'Légumes',k:35,u:'g'},
+  {n:'Bette cuite',c:'Légumes',k:20,u:'g'},
+  {n:'Navet cuit',c:'Légumes',k:25,u:'g'},
+  {n:'Patate douce crue',c:'Légumes',k:86,u:'g'},
+  {n:'Patate douce rôtie',c:'Légumes',k:90,u:'g'},
+  {n:'Patate douce vapeur',c:'Légumes',k:87,u:'g'},
+  {n:'Pomme de terre crue',c:'Légumes',k:77,u:'g'},
+  {n:'Pomme de terre vapeur',c:'Légumes',k:75,u:'g'},
+  {n:'Pomme de terre four (jacket)',c:'Légumes',k:95,u:'g',x:'1 grosse 200g = 190 kcal'},
+  {n:'Pomme de terre sautée',c:'Légumes',k:150,u:'g'},
+
+,
+
+  // ── SAUCES COMPLÈTES ──
+  // Sauces pour pâtes
+  {n:'Sauce tomate maison',c:'Sauces',k:45,u:'g',x:'portion 100g = 45 kcal'},
+  {n:'Sauce tomate industrielle (pot)',c:'Sauces',k:50,u:'g',x:'portion 100g = 50 kcal'},
+  {n:'Sauce bolognaise maison',c:'Sauces',k:95,u:'g',x:'portion 150g = 143 kcal'},
+  {n:'Sauce bolognaise pot',c:'Sauces',k:80,u:'g'},
+  {n:'Sauce carbonara maison',c:'Sauces',k:210,u:'g',x:'portion 100g = 210 kcal'},
+  {n:'Sauce carbonara pot',c:'Sauces',k:185,u:'g'},
+  {n:'Sauce pesto basilic vert',c:'Sauces',k:460,u:'g',x:'1 càs 15g = 69 kcal'},
+  {n:'Sauce pesto rouge (tomates)',c:'Sauces',k:320,u:'g',x:'1 càs 15g = 48 kcal'},
+  {n:'Sauce arrabiata',c:'Sauces',k:55,u:'g'},
+  {n:'Sauce napolitaine',c:'Sauces',k:48,u:'g'},
+  {n:'Sauce quatre fromages',c:'Sauces',k:195,u:'g',x:'portion 100g = 195 kcal'},
+  {n:'Sauce crème champignons',c:'Sauces',k:120,u:'g'},
+  {n:'Sauce crème saumon',c:'Sauces',k:135,u:'g'},
+  {n:'Sauce béchamel',c:'Sauces',k:90,u:'g',x:'2 càs 40g = 36 kcal'},
+  {n:'Sauce béchamel légère',c:'Sauces',k:55,u:'g'},
+  // Vinaigrettes
+  {n:'Vinaigrette maison huile vinaigre',c:'Sauces',k:300,u:'g',x:'1 càs 10g = 30 kcal'},
+  {n:'Vinaigrette allégée',c:'Sauces',k:120,u:'g',x:'1 càs 10g = 12 kcal'},
+  {n:'Vinaigrette balsamique',c:'Sauces',k:180,u:'g',x:'1 càs 15g = 27 kcal'},
+  {n:'Vinaigrette moutarde miel',c:'Sauces',k:220,u:'g'},
+  {n:'Vinaigrette citron huile olive',c:'Sauces',k:280,u:'g',x:'1 càs 10g = 28 kcal'},
+  {n:'Vinaigrette caesar',c:'Sauces',k:310,u:'g',x:'1 càs 15g = 47 kcal'},
+  {n:'Vinaigrette tahini citron',c:'Sauces',k:250,u:'g'},
+  {n:'Sauce salade légère (industrie)',c:'Sauces',k:150,u:'g'},
+  // Sauces yaourt
+  {n:'Sauce yaourt nature',c:'Sauces',k:55,u:'g',x:'2 càs 50g = 28 kcal'},
+  {n:'Sauce yaourt ail herbes',c:'Sauces',k:65,u:'g',x:'2 càs 50g = 33 kcal'},
+  {n:'Sauce yaourt citron menthe',c:'Sauces',k:55,u:'g'},
+  {n:'Sauce yaourt concombre (tzatziki)',c:'Sauces',k:66,u:'g',x:'2 càs 60g = 40 kcal'},
+  {n:'Sauce yaourt curry',c:'Sauces',k:70,u:'g'},
+  {n:'Sauce yaourt épices marocaines',c:'Sauces',k:60,u:'g'},
+  {n:'Raïta yaourt concombre',c:'Sauces',k:45,u:'g'},
+  // Sauces froides
+  {n:'Mayonnaise classique',c:'Sauces',k:680,u:'g',x:'1 càs 15g = 102 kcal'},
+  {n:'Mayonnaise allégée',c:'Sauces',k:320,u:'g',x:'1 càs 15g = 48 kcal'},
+  {n:'Sauce tartare',c:'Sauces',k:345,u:'g'},
+  {n:'Sauce cocktail (marie rose)',c:'Sauces',k:380,u:'g'},
+  {n:'Sauce caesar',c:'Sauces',k:310,u:'g'},
+  {n:'Sauce ranch',c:'Sauces',k:265,u:'g'},
+  {n:'Sauce burger',c:'Sauces',k:420,u:'g'},
+  {n:'Sauce samourai',c:'Sauces',k:390,u:'g'},
+  {n:'Sauce andalouse',c:'Sauces',k:370,u:'g'},
+  {n:'Sauce blanche kebab',c:'Sauces',k:280,u:'g',x:'2 càs 30g = 84 kcal'},
+  {n:'Sauce rouge kebab (harissa mayo)',c:'Sauces',k:310,u:'g'},
+  // Condiments et bases
+  {n:'Ketchup',c:'Sauces',k:100,u:'g',x:'1 càs 15g = 15 kcal'},
+  {n:'Moutarde classique',c:'Sauces',k:66,u:'g',x:'1 càs 10g = 7 kcal'},
+  {n:'Moutarde à l ancienne',c:'Sauces',k:77,u:'g'},
+  {n:'Sauce soja',c:'Sauces',k:60,u:'g',x:'1 càs 15ml = 9 kcal'},
+  {n:'Sauce soja sucrée',c:'Sauces',k:95,u:'g'},
+  {n:'Sauce teriyaki',c:'Sauces',k:95,u:'g',x:'1 càs 15g = 14 kcal'},
+  {n:'Sauce hoisin',c:'Sauces',k:220,u:'g'},
+  {n:'Sauce huître',c:'Sauces',k:100,u:'g'},
+  {n:'Sauce sriracha',c:'Sauces',k:90,u:'g'},
+  {n:'Sauce BBQ',c:'Sauces',k:120,u:'g',x:'1 càs 15g = 18 kcal'},
+  {n:'Sauce piquante Tabasco',c:'Sauces',k:12,u:'g',x:'quelques gouttes = 0'},
+  {n:'Vinaigre balsamique',c:'Sauces',k:88,u:'g',x:'1 càs 15g = 13 kcal'},
+  {n:'Vinaigre de cidre',c:'Sauces',k:22,u:'g',x:'quasi zéro'},
+  {n:'Vinaigre blanc',c:'Sauces',k:18,u:'g'},
+  {n:'Jus de citron',c:'Sauces',k:22,u:'g',x:'quasi zéro'},
+  {n:'Crème fraîche épaisse',c:'Sauces',k:292,u:'g',x:'1 càs 20g = 58 kcal'},
+  {n:'Crème fraîche allégée 15%',c:'Sauces',k:155,u:'g',x:'1 càs 20g = 31 kcal'},
+  {n:'Crème liquide entière',c:'Sauces',k:300,u:'g'},
+  {n:'Crème liquide allégée',c:'Sauces',k:170,u:'g'},
+  // Sauces orientales
+  {n:'Chermoula marocaine',c:'Sauces',k:120,u:'g',x:'2 càs 30g = 36 kcal'},
+  {n:'Charmoula citron',c:'Sauces',k:110,u:'g'},
+  {n:'Harissa marocaine',c:'Sauces',k:50,u:'g',x:'1 càc 5g = 3 kcal'},
+  {n:'Smen fondu',c:'Sauces',k:720,u:'g',x:'1 càs 10g = 72 kcal'},
+  {n:'Sauce arachide (africaine)',c:'Sauces',k:195,u:'g'},
+  {n:'Sauce tahini',c:'Sauces',k:595,u:'g',x:'1 càs 15g = 89 kcal'},
+  {n:'Hummus comme sauce',c:'Sauces',k:166,u:'g',x:'2 càs 40g = 66 kcal'},
+  // Huiles (utilisées comme sauce)
+  {n:'Huile olive (filet)',c:'Sauces',k:884,u:'g',x:'1 càs 14g = 124 kcal'},
+  {n:'Huile argan (filet)',c:'Sauces',k:884,u:'g',x:'1 càs 14g = 124 kcal'},
+  {n:'Huile de sésame',c:'Sauces',k:884,u:'g',x:'1 càc 5g = 44 kcal'},
+
+,
+
+  // ── QUINOA & GRAINES ──
+  {n:'Quinoa cuit',c:'Féculents',k:120,u:'g',x:'200g = 240 kcal'},
+  {n:'Quinoa cru',c:'Féculents',k:368,u:'g',x:'60g sec = 221 kcal'},
+  {n:'Quinoa rouge cuit',c:'Féculents',k:123,u:'g'},
+  {n:'Quinoa noir cuit',c:'Féculents',k:120,u:'g'},
+  {n:'Boulgour cuit',c:'Féculents',k:83,u:'g',x:'200g = 166 kcal'},
+  {n:'Millet cuit',c:'Féculents',k:119,u:'g'},
+  {n:'Sarrasin cuit',c:'Féculents',k:92,u:'g'},
+  {n:'Amarante cuite',c:'Féculents',k:102,u:'g'},
+  {n:'Orge cuit',c:'Féculents',k:123,u:'g'},
+  {n:'Épeautre cuit',c:'Féculents',k:127,u:'g'},
+  {n:'Graines de chia',c:'Féculents',k:486,u:'g',x:'1 càs 15g = 73 kcal'},
+  {n:'Graines de lin',c:'Féculents',k:534,u:'g',x:'1 càs 10g = 53 kcal'},
+  {n:'Graines de courge',c:'Féculents',k:559,u:'g',x:'1 càs 15g = 84 kcal'},
+  {n:'Graines de tournesol',c:'Féculents',k:584,u:'g',x:'1 càs 15g = 88 kcal'},
+  {n:'Graines de sésame',c:'Féculents',k:573,u:'g',x:'1 càs 10g = 57 kcal'},
+  // ── FRUITS DE MER ──
+  {n:'Crevettes crues',c:'Fruits de mer',k:85,u:'g'},
+  {n:'Crevettes cuites',c:'Fruits de mer',k:99,u:'g',x:'150g = 149 kcal'},
+  {n:'Crevettes grillées',c:'Fruits de mer',k:105,u:'g'},
+  {n:'Crevettes sautées beurre',c:'Fruits de mer',k:145,u:'g'},
+  {n:'Moules cuites',c:'Fruits de mer',k:86,u:'g',x:'200g = 172 kcal'},
+  {n:'Moules marinières',c:'Fruits de mer',k:95,u:'g'},
+  {n:'Palourdes cuites',c:'Fruits de mer',k:74,u:'g'},
+  {n:'Calamars crus',c:'Fruits de mer',k:92,u:'g'},
+  {n:'Calamars frits',c:'Fruits de mer',k:175,u:'g',x:'150g = 263 kcal'},
+  {n:'Calamars grillés',c:'Fruits de mer',k:100,u:'g'},
+  {n:'Poulpe cuit',c:'Fruits de mer',k:82,u:'g'},
+  {n:'Homard cuit',c:'Fruits de mer',k:97,u:'g'},
+  {n:'Langoustines cuites',c:'Fruits de mer',k:88,u:'g'},
+  {n:'Huîtres',c:'Fruits de mer',k:68,u:'g',x:'6 huîtres 90g = 61 kcal'},
+  {n:'Saint-Jacques poêlées',c:'Fruits de mer',k:111,u:'g'},
+  {n:'Crabe cuit',c:'Fruits de mer',k:97,u:'g'},
+  {n:'Surimi bâtonnets',c:'Fruits de mer',k:95,u:'g',x:'1 bâtonnet 15g = 14 kcal'},
+  // ── POISSONS DÉTAILLÉS ──
+  {n:'Saumon cru',c:'Poissons',k:208,u:'g'},
+  {n:'Saumon grillé',c:'Poissons',k:185,u:'g',x:'150g = 278 kcal'},
+  {n:'Saumon fumé',c:'Poissons',k:172,u:'g',x:'2 tranches 60g = 103 kcal'},
+  {n:'Saumon vapeur',c:'Poissons',k:175,u:'g'},
+  {n:'Saumon en papillote',c:'Poissons',k:168,u:'g'},
+  {n:'Thon frais grillé',c:'Poissons',k:144,u:'g'},
+  {n:'Thon en conserve naturel',c:'Poissons',k:116,u:'g',x:'boîte 140g = 162 kcal'},
+  {n:'Thon en conserve huile',c:'Poissons',k:200,u:'g'},
+  {n:'Sardines grillées',c:'Poissons',k:140,u:'g'},
+  {n:'Sardines en conserve huile',c:'Poissons',k:208,u:'g'},
+  {n:'Sardines en conserve tomate',c:'Poissons',k:135,u:'g'},
+  {n:'Cabillaud grillé',c:'Poissons',k:82,u:'g',x:'très maigre'},
+  {n:'Cabillaud vapeur',c:'Poissons',k:78,u:'g'},
+  {n:'Cabillaud pané',c:'Poissons',k:180,u:'g'},
+  {n:'Lieu noir grillé',c:'Poissons',k:90,u:'g'},
+  {n:'Dorade grillée',c:'Poissons',k:105,u:'g'},
+  {n:'Bar grillé',c:'Poissons',k:97,u:'g'},
+  {n:'Merlan grillé',c:'Poissons',k:82,u:'g'},
+  {n:'Truite grillée',c:'Poissons',k:149,u:'g'},
+  {n:'Maquereau grillé',c:'Poissons',k:205,u:'g'},
+  {n:'Maquereau en conserve tomate',c:'Poissons',k:165,u:'g'},
+  {n:'Anchois en conserve',c:'Poissons',k:210,u:'g',x:'2 filets 10g = 21 kcal'},
+  {n:'Poisson blanc vapeur',c:'Poissons',k:80,u:'g'},
+  {n:'Fish fingers surgelés',c:'Poissons',k:205,u:'g',x:'4 pièces 100g = 205 kcal'},
+  {n:'Poisson pané surgelé',c:'Poissons',k:195,u:'g'},
+  // ── CHOCOLATS ──
+  {n:'Chocolat noir 70%',c:'Chocolats',k:598,u:'g',x:'carré 10g = 60 kcal'},
+  {n:'Chocolat noir 85%',c:'Chocolats',k:620,u:'g',x:'carré 10g = 62 kcal'},
+  {n:'Chocolat noir 90%',c:'Chocolats',k:640,u:'g'},
+  {n:'Chocolat au lait',c:'Chocolats',k:535,u:'g',x:'carré 10g = 54 kcal'},
+  {n:'Chocolat blanc',c:'Chocolats',k:559,u:'g',x:'carré 10g = 56 kcal'},
+  {n:'Chocolat praliné',c:'Chocolats',k:555,u:'g'},
+  {n:'Chocolat fourré caramel',c:'Chocolats',k:510,u:'g'},
+  {n:'Kinder Bueno',c:'Chocolats',k:546,u:'g',x:'1 barre 43g = 235 kcal'},
+  {n:'Kinder Schoko-Bons',c:'Chocolats',k:568,u:'g',x:'3 pièces 21g = 119 kcal'},
+  {n:'Ferrero Rocher',c:'Chocolats',k:572,u:'g',x:'1 pièce 12.5g = 72 kcal'},
+  {n:'Raffaello',c:'Chocolats',k:614,u:'g',x:'1 pièce 10g = 61 kcal'},
+  {n:'Bounty',c:'Chocolats',k:475,u:'g',x:'1 barre 57g = 271 kcal'},
+  {n:'Twix',c:'Chocolats',k:495,u:'g',x:'1 barre 50g = 248 kcal'},
+  {n:'Snickers',c:'Chocolats',k:488,u:'g',x:'1 barre 52g = 254 kcal'},
+  {n:'Mars',c:'Chocolats',k:449,u:'g',x:'1 barre 51g = 229 kcal'},
+  {n:'Kit Kat',c:'Chocolats',k:518,u:'g',x:'2 fingers 41g = 212 kcal'},
+  {n:'Maltesers',c:'Chocolats',k:499,u:'g',x:'boîte 37g = 185 kcal'},
+  {n:'M&Ms cacahuètes',c:'Chocolats',k:491,u:'g',x:'sachet 45g = 221 kcal'},
+  {n:'Pépites chocolat noir',c:'Chocolats',k:520,u:'g',x:'1 càs 15g = 78 kcal'},
+  {n:'Poudre cacao non sucré',c:'Chocolats',k:228,u:'g',x:'1 càs 10g = 23 kcal'},
+  {n:'Nutella',c:'Chocolats',k:539,u:'g',x:'1 càs 15g = 81 kcal'},
+  // ── BISCUITS & GÂTEAUX ──
+  {n:'Oreo classique',c:'Biscuits',k:471,u:'g',x:'1 biscuit 11g = 52 kcal'},
+  {n:'Oreo double',c:'Biscuits',k:490,u:'g'},
+  {n:'Petit beurre LU',c:'Biscuits',k:428,u:'g',x:'1 biscuit 7g = 30 kcal'},
+  {n:'Digestive McVities',c:'Biscuits',k:463,u:'g',x:'1 biscuit 14g = 65 kcal'},
+  {n:'Spéculoos Lotus',c:'Biscuits',k:484,u:'g',x:'1 biscuit 8g = 39 kcal'},
+  {n:'Sablés bretons',c:'Biscuits',k:500,u:'g',x:'1 sablé 20g = 100 kcal'},
+  {n:'Cookies chocolat maison',c:'Biscuits',k:460,u:'g',x:'1 cookie 30g = 138 kcal'},
+  {n:'Cookies industriels',c:'Biscuits',k:488,u:'g'},
+  {n:'Crackers salés',c:'Biscuits',k:420,u:'g',x:'5 crackers 20g = 84 kcal'},
+  {n:'Galettes de riz nature',c:'Biscuits',k:385,u:'g',x:'1 galette 9g = 35 kcal'},
+  {n:'Galettes de riz chocolat',c:'Biscuits',k:400,u:'g'},
+  {n:'Madeleines',c:'Biscuits',k:410,u:'g',x:'1 madeleine 30g = 123 kcal'},
+  {n:'Financiers',c:'Biscuits',k:430,u:'g',x:'1 financier 25g = 108 kcal'},
+  {n:'Brownies maison',c:'Biscuits',k:415,u:'g',x:'1 carré 60g = 249 kcal'},
+  {n:'Brownies industriels',c:'Biscuits',k:430,u:'g'},
+  {n:'Barres de céréales nature',c:'Biscuits',k:390,u:'g',x:'1 barre 25g = 98 kcal'},
+  {n:'Barres de céréales chocolat',c:'Biscuits',k:420,u:'g'},
+  {n:'Barre protéinée',c:'Biscuits',k:380,u:'g',x:'1 barre 60g = 228 kcal'},
+  {n:'Pop corn sucré',c:'Biscuits',k:420,u:'g',x:'sachet 30g = 126 kcal'},
+  {n:'Pop corn salé',c:'Biscuits',k:375,u:'g'},
+  {n:'Chips nature',c:'Biscuits',k:536,u:'g',x:'sachet 30g = 161 kcal'},
+  {n:'Chips paprika',c:'Biscuits',k:528,u:'g'},
+  {n:'Nachos tortillas',c:'Biscuits',k:475,u:'g',x:'30g = 143 kcal'},
+  {n:'Bonbons Haribo',c:'Biscuits',k:340,u:'g',x:'30g = 102 kcal'},
+  {n:'Chewing gum sans sucre',c:'Biscuits',k:11,u:'g',x:'quasi zéro'},
+  // ── FAST FOOD DÉTAILLÉ ──
+  {n:'Big Mac McDonald',c:'Fast-food',k:257,u:'g',x:'215g = 553 kcal'},
+  {n:'McChicken McDonald',c:'Fast-food',k:240,u:'g',x:'190g = 456 kcal'},
+  {n:'McNuggets x6',c:'Fast-food',k:250,u:'g',x:'102g = 255 kcal'},
+  {n:'Filet O Fish McDonald',c:'Fast-food',k:240,u:'g'},
+  {n:'Frites McDonald petites',c:'Fast-food',k:312,u:'g',x:'230g = 318 kcal'},
+  {n:'Frites McDonald grandes',c:'Fast-food',k:312,u:'g',x:'154g = 481 kcal'},
+  {n:'Whopper Burger King',c:'Fast-food',k:250,u:'g',x:'270g = 675 kcal'},
+  {n:'Chicken Burger King',c:'Fast-food',k:235,u:'g'},
+  {n:'KFC poulet frit original',c:'Fast-food',k:280,u:'g',x:'1 morceau 100g = 280 kcal'},
+  {n:'KFC poulet crispy',c:'Fast-food',k:295,u:'g'},
+  {n:'Chawarma poulet',c:'Fast-food',k:195,u:'g',x:'sandwich 220g = 429 kcal'},
+  {n:'Chawarma viande',c:'Fast-food',k:225,u:'g'},
+  {n:'Tacos marocain poulet',c:'Fast-food',k:245,u:'g',x:'250g = 613 kcal'},
+  {n:'Tacos marocain viande',c:'Fast-food',k:265,u:'g'},
+  {n:'Sandwich kefta pain',c:'Fast-food',k:240,u:'g'},
+  {n:'Sandwich merguez frites',c:'Fast-food',k:310,u:'g'},
+  {n:'Pizza margherita',c:'Fast-food',k:235,u:'g',x:'1 part 100g = 235 kcal'},
+  {n:'Pizza 4 fromages',c:'Fast-food',k:270,u:'g'},
+  {n:'Pizza pepperoni',c:'Fast-food',k:265,u:'g'},
+  {n:'Hotdog',c:'Fast-food',k:295,u:'g',x:'1 hotdog 150g = 443 kcal'},
+  {n:'Hamburger classique',c:'Fast-food',k:255,u:'g'},
+  {n:'Cheeseburger',c:'Fast-food',k:275,u:'g'},
+  {n:'Double burger',c:'Fast-food',k:295,u:'g'},
+  {n:'Sandwich club',c:'Fast-food',k:215,u:'g'},
+  {n:'Wrap poulet grillé',c:'Fast-food',k:185,u:'g',x:'200g = 370 kcal'},
+  {n:'Döner kebab',c:'Fast-food',k:215,u:'g',x:'250g = 538 kcal'},
+  {n:'Brochette poulet',c:'Fast-food',k:155,u:'g'},
+  {n:'Brochette kefta',c:'Fast-food',k:220,u:'g'},
+  // ── SALADES COMPOSÉES ──
+  {n:'Salade niçoise',c:'Salades',k:95,u:'g',x:'assiette 300g = 285 kcal'},
+  {n:'Salade caesar poulet',c:'Salades',k:120,u:'g',x:'assiette 300g = 360 kcal'},
+  {n:'Salade caesar crevettes',c:'Salades',k:110,u:'g'},
+  {n:'Salade grecque',c:'Salades',k:85,u:'g',x:'assiette 300g = 255 kcal'},
+  {n:'Salade composée thon maïs',c:'Salades',k:100,u:'g',x:'assiette 300g = 300 kcal'},
+  {n:'Salade chèvre chaud',c:'Salades',k:145,u:'g'},
+  {n:'Salade quinoa légumes',c:'Salades',k:110,u:'g',x:'assiette 300g = 330 kcal'},
+  {n:'Salade avocat crevettes',c:'Salades',k:130,u:'g'},
+  {n:'Salade marocaine tomates oignons',c:'Salades',k:45,u:'g'},
+  {n:'Salade roquette parmesan',c:'Salades',k:125,u:'g'},
+  {n:'Taboulé maison',c:'Salades',k:120,u:'g',x:'assiette 250g = 300 kcal'},
+  {n:'Taboulé industriel',c:'Salades',k:130,u:'g'},
+  {n:'Carottes râpées nature',c:'Salades',k:41,u:'g',x:'portion 150g = 62 kcal'},
+  {n:'Carottes râpées vinaigrette',c:'Salades',k:60,u:'g'},
+  {n:'Salade coleslaw',c:'Salades',k:120,u:'g'},
+  {n:'Salade de lentilles',c:'Salades',k:115,u:'g'},
+  {n:'Salade de pâtes froide',c:'Salades',k:145,u:'g'},
+  {n:'Fattoush',c:'Salades',k:75,u:'g'},
+  {n:'Taboulé libanais',c:'Salades',k:85,u:'g'},
+  {n:'Salade verte nature',c:'Salades',k:15,u:'g'},
+  {n:'Salade verte vinaigrette',c:'Salades',k:35,u:'g'},
+  {n:'Mesclun nature',c:'Salades',k:18,u:'g'},
+
+,
+
+  // ── NOIX & OLÉAGINEUX ──
+  {n:'Amandes nature',c:'Noix',k:579,u:'g',x:'petite poignée 25g = 145 kcal'},
+  {n:'Amandes grillées salées',c:'Noix',k:598,u:'g'},
+  {n:'Noix de cajou',c:'Noix',k:553,u:'g',x:'petite poignée 25g = 138 kcal'},
+  {n:'Noix classiques',c:'Noix',k:654,u:'g',x:'2 noix 20g = 131 kcal'},
+  {n:'Noix de macadamia',c:'Noix',k:718,u:'g'},
+  {n:'Noisettes',c:'Noix',k:628,u:'g'},
+  {n:'Pistaches',c:'Noix',k:562,u:'g',x:'petite poignée 25g = 141 kcal'},
+  {n:'Noix de pécan',c:'Noix',k:691,u:'g'},
+  {n:'Cacahuètes nature',c:'Noix',k:567,u:'g',x:'petite poignée 25g = 142 kcal'},
+  {n:'Cacahuètes grillées salées',c:'Noix',k:585,u:'g'},
+  {n:'Noix du Brésil',c:'Noix',k:656,u:'g',x:'2 noix 10g = 66 kcal'},
+  {n:'Mix noix nature',c:'Noix',k:607,u:'g'},
+  {n:'Pignons de pin',c:'Noix',k:673,u:'g',x:'1 càs 10g = 67 kcal'},
+  {n:'Beurre amandes',c:'Noix',k:614,u:'g',x:'1 càs 15g = 92 kcal'},
+  {n:'Beurre cacahuète nature',c:'Noix',k:588,u:'g',x:'1 càs 15g = 88 kcal'},
+  // ── LÉGUMINEUSES ──
+  {n:'Fèves cuites',c:'Légumineuses',k:110,u:'g',x:'200g = 220 kcal'},
+  {n:'Fèves fraîches',c:'Légumineuses',k:88,u:'g'},
+  {n:'Flageolets cuits',c:'Légumineuses',k:95,u:'g'},
+  {n:'Edamame',c:'Légumineuses',k:121,u:'g',x:'100g = 121 kcal'},
+  {n:'Haricots rouges cuits',c:'Légumineuses',k:127,u:'g'},
+  {n:'Haricots noirs cuits',c:'Légumineuses',k:132,u:'g'},
+  {n:'Pois cassés cuits',c:'Légumineuses',k:118,u:'g'},
+  {n:'Pois chiches rôtis',c:'Légumineuses',k:364,u:'g',x:'snack 30g = 109 kcal'},
+  {n:'Soja cuit',c:'Légumineuses',k:173,u:'g'},
+  // ── SUBSTITUTS VÉGÉTAUX ──
+  {n:'Tofu nature',c:'Végétal',k:76,u:'g',x:'100g = 76 kcal'},
+  {n:'Tofu fumé',c:'Végétal',k:125,u:'g'},
+  {n:'Tofu grillé',c:'Végétal',k:95,u:'g'},
+  {n:'Tofu sauté sauce soja',c:'Végétal',k:110,u:'g'},
+  {n:'Tempeh',c:'Végétal',k:193,u:'g'},
+  {n:'Seitan',c:'Végétal',k:120,u:'g'},
+  {n:'Steak vegetal soja',c:'Végétal',k:145,u:'g'},
+  // ── SOUPES & VELOUTÉS ──
+  {n:'Soupe tomates maison',c:'Soupes',k:42,u:'g',x:'bol 250ml = 105 kcal'},
+  {n:'Velouté butternut maison',c:'Soupes',k:48,u:'g',x:'bol 250ml = 120 kcal'},
+  {n:'Velouté carottes gingembre',c:'Soupes',k:45,u:'g'},
+  {n:'Soupe légumes maison',c:'Soupes',k:35,u:'g',x:'bol 250ml = 88 kcal'},
+  {n:'Soupe poireaux pommes de terre',c:'Soupes',k:55,u:'g'},
+  {n:'Velouté champignons',c:'Soupes',k:65,u:'g'},
+  {n:'Soupe lentilles corail',c:'Soupes',k:70,u:'g'},
+  {n:'Soupe miso',c:'Soupes',k:25,u:'g',x:'bol 200ml = 50 kcal'},
+  {n:'Gaspacho tomates',c:'Soupes',k:30,u:'g'},
+  {n:'Soupe instantanée sachet',c:'Soupes',k:35,u:'g',x:'bol 250ml = 88 kcal'},
+  {n:'Soupe boîte industrielle',c:'Soupes',k:40,u:'g'},
+  {n:'Harira maison',c:'Soupes',k:55,u:'g',x:'bol 250ml = 138 kcal'},
+  {n:'Chorba',c:'Soupes',k:60,u:'g'},
+  // ── FROMAGES VARIÉS ──
+  {n:'Parmesan râpé',c:'Fromages',k:431,u:'g',x:'1 càs 10g = 43 kcal'},
+  {n:'Cheddar',c:'Fromages',k:403,u:'g',x:'1 tranche 25g = 101 kcal'},
+  {n:'Gouda',c:'Fromages',k:356,u:'g'},
+  {n:'Brie',c:'Fromages',k:334,u:'g'},
+  {n:'Gruyère',c:'Fromages',k:413,u:'g'},
+  {n:'Comté',c:'Fromages',k:415,u:'g'},
+  {n:'Ricotta',c:'Fromages',k:174,u:'g',x:'2 càs 40g = 70 kcal'},
+  {n:'Mascarpone',c:'Fromages',k:429,u:'g'},
+  {n:'Burrata',c:'Fromages',k:300,u:'g'},
+  {n:'Cottage cheese',c:'Fromages',k:98,u:'g',x:'pot 100g = 98 kcal'},
+  {n:'Skyr nature',c:'Fromages',k:63,u:'g',x:'pot 150g = 95 kcal'},
+  // ── CHARCUTERIE DÉTAILLÉE ──
+  {n:'Mortadelle',c:'Charcuterie',k:311,u:'g',x:'2 tranches 40g = 124 kcal'},
+  {n:'Salami',c:'Charcuterie',k:425,u:'g',x:'3 tranches 30g = 128 kcal'},
+  {n:'Pastrami',c:'Charcuterie',k:139,u:'g'},
+  {n:'Bresaola',c:'Charcuterie',k:151,u:'g',x:'maigre'},
+  {n:'Prosciutto crudo',c:'Charcuterie',k:268,u:'g',x:'2 tranches 30g = 80 kcal'},
+  {n:'Pepperoni',c:'Charcuterie',k:460,u:'g'},
+  {n:'Rillettes porc',c:'Charcuterie',k:430,u:'g',x:'1 càs 20g = 86 kcal'},
+  // ── GLACES & DESSERTS GLACÉS ──
+  {n:'Magnum amande',c:'Glaces',k:270,u:'g',x:'1 barre 120ml = 324 kcal'},
+  {n:'Magnum classic',c:'Glaces',k:255,u:'g'},
+  {n:'Cornetto classique',c:'Glaces',k:230,u:'g',x:'1 cornet 90ml = 207 kcal'},
+  {n:'Ben Jerry cookie dough',c:'Glaces',k:265,u:'g',x:'pot 100ml = 265 kcal'},
+  {n:'Ben Jerry chocolate fudge',c:'Glaces',k:280,u:'g'},
+  {n:'Haagen Dazs vanille',c:'Glaces',k:269,u:'g'},
+  {n:'Glace vanille maison',c:'Glaces',k:207,u:'g'},
+  {n:'Sorbet citron',c:'Glaces',k:109,u:'g',x:'boule 60g = 65 kcal'},
+  {n:'Sorbet framboise',c:'Glaces',k:100,u:'g'},
+  {n:'Sorbet mangue',c:'Glaces',k:115,u:'g'},
+  {n:'Glace chocolat',c:'Glaces',k:220,u:'g'},
+  {n:'Frozen yogurt',c:'Glaces',k:127,u:'g'},
+  {n:'Esquimau chocolat',c:'Glaces',k:185,u:'g'},
+  // ── SANDWICHS & PANINIS ──
+  {n:'Panini jambon fromage',c:'Sandwichs',k:255,u:'g',x:'1 panini 200g = 510 kcal'},
+  {n:'Panini poulet grillé',c:'Sandwichs',k:235,u:'g'},
+  {n:'Panini thon mozzarella',c:'Sandwichs',k:245,u:'g'},
+  {n:'Sandwich baguette jambon beurre',c:'Sandwichs',k:240,u:'g',x:'1 sandwich 180g = 432 kcal'},
+  {n:'Sandwich complet poulet crudités',c:'Sandwichs',k:185,u:'g'},
+  {n:'Bagel saumon avocat',c:'Sandwichs',k:220,u:'g'},
+  {n:'Croque monsieur',c:'Sandwichs',k:270,u:'g',x:'1 croque 150g = 405 kcal'},
+  {n:'Croque madame',c:'Sandwichs',k:285,u:'g'},
+  {n:'Club sandwich',c:'Sandwichs',k:210,u:'g'},
+  // ── DESSERTS MAROCAINS COMPLETS ──
+  {n:'Chebakia miel sésame',c:'Pâtisseries maroc',k:480,u:'g',x:'1 pièce 40g = 192 kcal'},
+  {n:'Cornes gazelle amandes',c:'Pâtisseries maroc',k:420,u:'g',x:'1 pièce 30g = 126 kcal'},
+  {n:'Sellou sfou',c:'Pâtisseries maroc',k:490,u:'g',x:'30g = 147 kcal'},
+  {n:'Makrout dattes',c:'Pâtisseries maroc',k:410,u:'g',x:'1 pièce 40g = 164 kcal'},
+  {n:'Ghriba coco',c:'Pâtisseries maroc',k:445,u:'g',x:'1 pièce 25g = 111 kcal'},
+  {n:'Ghriba amandes',c:'Pâtisseries maroc',k:460,u:'g'},
+  {n:'Fekkas anis',c:'Pâtisseries maroc',k:420,u:'g',x:'1 pièce 15g = 63 kcal'},
+  {n:'Cigares amandes',c:'Pâtisseries maroc',k:440,u:'g'},
+  {n:'Briouates amandes miel',c:'Pâtisseries maroc',k:430,u:'g'},
+  {n:'Halwa maison',c:'Pâtisseries maroc',k:465,u:'g'},
+  {n:'Kaab ghzal',c:'Pâtisseries maroc',k:415,u:'g'},
+  {n:'Zlabia',c:'Pâtisseries maroc',k:450,u:'g'},
+  {n:'Sfenj',c:'Pâtisseries maroc',k:340,u:'g',x:'1 sfenj 60g = 204 kcal'},
+
+,
+
+  // ── BISCOTTES & GALETTES ──
+  {n:'Biscotte nature',c:'Biscottes',k:408,u:'g',x:'1 biscotte 10g = 41 kcal'},
+  {n:'Biscotte complète',c:'Biscottes',k:385,u:'g',x:'1 biscotte 10g = 39 kcal'},
+  {n:'Biscotte sans gluten',c:'Biscottes',k:395,u:'g'},
+  {n:'Biscotte aux céréales',c:'Biscottes',k:398,u:'g'},
+  {n:'Craquotte seigle',c:'Biscottes',k:335,u:'g',x:'1 craquotte 10g = 34 kcal'},
+  {n:'Pain grillé maison',c:'Biscottes',k:280,u:'g',x:'1 tranche 30g = 84 kcal'},
+  {n:'Galette de riz nature',c:'Biscottes',k:385,u:'g',x:'1 galette 9g = 35 kcal'},
+  {n:'Galette de riz chocolat',c:'Biscottes',k:405,u:'g',x:'1 galette 9g = 36 kcal'},
+  {n:'Galette de riz caramel',c:'Biscottes',k:400,u:'g'},
+  {n:'Galette de riz soufflé',c:'Biscottes',k:390,u:'g'},
+  {n:'Galette de maïs nature',c:'Biscottes',k:372,u:'g',x:'1 galette 9g = 33 kcal'},
+  {n:'Galette de maïs salée',c:'Biscottes',k:378,u:'g'},
+  {n:'Galette de sarrasin soufflé',c:'Biscottes',k:355,u:'g'},
+  {n:'Crackers eau sel',c:'Biscottes',k:420,u:'g',x:'5 crackers 20g = 84 kcal'},
+  {n:'Crackers sésame',c:'Biscottes',k:445,u:'g'},
+  {n:'Crackers complets',c:'Biscottes',k:395,u:'g'},
+  {n:'Gressins italiens',c:'Biscottes',k:415,u:'g',x:'3 gressins 15g = 62 kcal'},
+  {n:'Pain suédois croustillant',c:'Biscottes',k:350,u:'g'},
+  // ── FROMAGES MAROCAINS & ORIENTAUX ──
+  {n:'Jben fromage frais marocain',c:'Fromages maroc',k:98,u:'g',x:'portion 100g = 98 kcal'},
+  {n:'Jebli fromage montagne',c:'Fromages maroc',k:290,u:'g',x:'portion 30g = 87 kcal'},
+  {n:'Fromage smen marocain affiné',c:'Fromages maroc',k:720,u:'g',x:'1 càs 10g = 72 kcal'},
+  {n:'Fromage beldi marocain',c:'Fromages maroc',k:280,u:'g'},
+  {n:'Fromage chèvre frais',c:'Fromages maroc',k:230,u:'g',x:'portion 30g = 69 kcal'},
+  {n:'Fromage chèvre affiné',c:'Fromages maroc',k:310,u:'g'},
+  {n:'Labné égoutté ferme',c:'Fromages maroc',k:190,u:'g',x:'2 càs 40g = 76 kcal'},
+  {n:'Labné boules huile',c:'Fromages maroc',k:280,u:'g'},
+  {n:'Fromage akkawi',c:'Fromages maroc',k:260,u:'g'},
+  {n:'Halloumi grillé',c:'Fromages maroc',k:321,u:'g',x:'2 tranches 60g = 193 kcal'},
+  {n:'Halloumi cru',c:'Fromages maroc',k:316,u:'g'},
+  {n:'Fromage Kiri portion',c:'Fromages maroc',k:250,u:'g',x:'1 portion 19g = 48 kcal'},
+  {n:'Fromage La Vache qui rit',c:'Fromages maroc',k:230,u:'g',x:'1 portion 18g = 41 kcal'},
+  {n:'Fromage Babybel',c:'Fromages maroc',k:305,u:'g',x:'1 Babybel 20g = 61 kcal'},
+  {n:'Fromage Laughing Cow light',c:'Fromages maroc',k:150,u:'g'},
+  {n:'Fromage blanc 0% nature',c:'Fromages maroc',k:45,u:'g',x:'pot 100g = 45 kcal'},
+  {n:'Fromage blanc 20%',c:'Fromages maroc',k:80,u:'g'},
+  {n:'Fromage frais Philadelphia',c:'Fromages maroc',k:245,u:'g',x:'1 càs 20g = 49 kcal'},
+  {n:'Ricotta légère',c:'Fromages maroc',k:130,u:'g'},
+  {n:'Fromage Edam',c:'Fromages maroc',k:357,u:'g'},
+  {n:'Fromage Emmental tranches',c:'Fromages maroc',k:380,u:'g',x:'1 tranche 25g = 95 kcal'},
+  {n:'Mozzarella light',c:'Fromages maroc',k:190,u:'g'},
+  {n:'Feta allégée',c:'Fromages maroc',k:195,u:'g'},
+
+,
+
+  // ── FROMAGES AFFINÉS COMPLETS ──
+  {n:'Fromage rouge (Gouda rouge)',c:'Fromages affinés',k:356,u:'g',x:'1 tranche 25g = 89 kcal'},
+  {n:'Fromage rouge Edam',c:'Fromages affinés',k:357,u:'g',x:'1 tranche 25g = 89 kcal'},
+  {n:'Fromage rouge Babybel rouge',c:'Fromages affinés',k:305,u:'g',x:'1 Babybel 20g = 61 kcal'},
+  {n:'Emmental français',c:'Fromages affinés',k:380,u:'g',x:'1 tranche 25g = 95 kcal'},
+  {n:'Emmental râpé',c:'Fromages affinés',k:395,u:'g',x:'1 càs 10g = 40 kcal'},
+  {n:'Emmental léger',c:'Fromages affinés',k:280,u:'g'},
+  {n:'Gruyère',c:'Fromages affinés',k:413,u:'g',x:'1 tranche 25g = 103 kcal'},
+  {n:'Comté affiné',c:'Fromages affinés',k:415,u:'g'},
+  {n:'Beaufort',c:'Fromages affinés',k:401,u:'g'},
+  {n:'Brie de Meaux',c:'Fromages affinés',k:334,u:'g',x:'30g = 100 kcal'},
+  {n:'Camembert',c:'Fromages affinés',k:300,u:'g',x:'1 portion 30g = 90 kcal'},
+  {n:'Camembert léger',c:'Fromages affinés',k:220,u:'g'},
+  {n:'Coulommiers',c:'Fromages affinés',k:320,u:'g'},
+  {n:'Brie léger',c:'Fromages affinés',k:240,u:'g'},
+  {n:'Roquefort',c:'Fromages affinés',k:369,u:'g',x:'20g = 74 kcal'},
+  {n:'Bleu d auvergne',c:'Fromages affinés',k:342,u:'g'},
+  {n:'Gorgonzola',c:'Fromages affinés',k:330,u:'g'},
+  {n:'Saint-Nectaire',c:'Fromages affinés',k:310,u:'g'},
+  {n:'Reblochon',c:'Fromages affinés',k:330,u:'g'},
+  {n:'Munster',c:'Fromages affinés',k:300,u:'g'},
+  {n:'Livarot',c:'Fromages affinés',k:295,u:'g'},
+  {n:'Gouda jeune',c:'Fromages affinés',k:356,u:'g',x:'1 tranche 25g = 89 kcal'},
+  {n:'Gouda affiné',c:'Fromages affinés',k:380,u:'g'},
+  {n:'Gouda fumé',c:'Fromages affinés',k:365,u:'g'},
+  {n:'Cheddar fort',c:'Fromages affinés',k:403,u:'g',x:'1 tranche 25g = 101 kcal'},
+  {n:'Cheddar léger',c:'Fromages affinés',k:270,u:'g'},
+  {n:'Cheddar fondu tranches',c:'Fromages affinés',k:295,u:'g',x:'1 tranche 20g = 59 kcal'},
+  {n:'Maasdam',c:'Fromages affinés',k:350,u:'g'},
+  {n:'Leerdammer',c:'Fromages affinés',k:340,u:'g',x:'1 tranche 20g = 68 kcal'},
+  {n:'Leerdammer léger',c:'Fromages affinés',k:240,u:'g'},
+  {n:'Parmesan bloc',c:'Fromages affinés',k:431,u:'g',x:'1 càs râpé 10g = 43 kcal'},
+  {n:'Pecorino',c:'Fromages affinés',k:420,u:'g'},
+  {n:'Manchego',c:'Fromages affinés',k:395,u:'g'},
+  {n:'Mimolette',c:'Fromages affinés',k:369,u:'g'},
+  {n:'Morbier',c:'Fromages affinés',k:325,u:'g'},
+  {n:'Raclette',c:'Fromages affinés',k:335,u:'g',x:'2 tranches 40g = 134 kcal'},
+  {n:'Raclette légère',c:'Fromages affinés',k:240,u:'g'},
+  {n:'Fromage fondu portion',c:'Fromages affinés',k:230,u:'g',x:'1 portion 17g = 39 kcal'},
+  {n:'Fromage fondu à tartiner',c:'Fromages affinés',k:220,u:'g'},
+  {n:'Boursin ail fines herbes',c:'Fromages affinés',k:370,u:'g',x:'1 càs 20g = 74 kcal'},
+  {n:'Fromage cottage nature',c:'Fromages affinés',k:98,u:'g',x:'pot 100g = 98 kcal'},
+  {n:'Skyr Islande nature',c:'Fromages affinés',k:63,u:'g',x:'pot 150g = 95 kcal'},
+  {n:'Mascarpone',c:'Fromages affinés',k:429,u:'g',x:'1 càs 20g = 86 kcal'},
+  {n:'Burrata',c:'Fromages affinés',k:300,u:'g',x:'1 burrata 125g = 375 kcal'},
+  {n:'Mozzarella di bufala',c:'Fromages affinés',k:255,u:'g'},
+
+,
+
+  // ── SUSHIS & JAPONAIS ──
+  {n:'Sushi saumon (nigiri)',c:'Japonais',k:40,u:'g',x:'1 pièce 25g = 10 kcal'},
+  {n:'Sushi thon (nigiri)',c:'Japonais',k:38,u:'g',x:'1 pièce 25g = 10 kcal'},
+  {n:'Sushi crevette (nigiri)',c:'Japonais',k:35,u:'g'},
+  {n:'Maki saumon',c:'Japonais',k:145,u:'g',x:'6 pièces 100g = 145 kcal'},
+  {n:'Maki thon',c:'Japonais',k:140,u:'g'},
+  {n:'Maki concombre',c:'Japonais',k:95,u:'g',x:'6 pièces = 95 kcal'},
+  {n:'Maki avocat',c:'Japonais',k:130,u:'g'},
+  {n:'California roll saumon',c:'Japonais',k:175,u:'g',x:'8 pièces 150g = 263 kcal'},
+  {n:'California roll crevette',c:'Japonais',k:165,u:'g'},
+  {n:'California roll surimi',c:'Japonais',k:155,u:'g'},
+  {n:'Temaki saumon',c:'Japonais',k:185,u:'g',x:'1 cône = 185 kcal'},
+  {n:'Chirashi saumon',c:'Japonais',k:155,u:'g',x:'bol 300g = 465 kcal'},
+  {n:'Poke bowl saumon',c:'Japonais',k:140,u:'g',x:'bol 350g = 490 kcal'},
+  {n:'Poke bowl thon',c:'Japonais',k:135,u:'g'},
+  {n:'Ramen poulet',c:'Japonais',k:95,u:'g',x:'bol 450g = 428 kcal'},
+  {n:'Ramen boeuf',c:'Japonais',k:105,u:'g'},
+  {n:'Ramen végétarien',c:'Japonais',k:80,u:'g'},
+  {n:'Ramen instantané',c:'Japonais',k:430,u:'g',x:'sachet 80g = 344 kcal'},
+  {n:'Gyoza porc grillés',c:'Japonais',k:195,u:'g',x:'6 pièces 120g = 234 kcal'},
+  {n:'Gyoza poulet',c:'Japonais',k:175,u:'g'},
+  {n:'Gyoza vapeur',c:'Japonais',k:150,u:'g'},
+  {n:'Edamame nature',c:'Japonais',k:121,u:'g',x:'100g = 121 kcal'},
+  {n:'Edamame salé',c:'Japonais',k:125,u:'g'},
+  {n:'Miso soupe',c:'Japonais',k:25,u:'g',x:'bol 200ml = 50 kcal'},
+  {n:'Donburi poulet (oyakodon)',c:'Japonais',k:155,u:'g',x:'bol 400g = 620 kcal'},
+  {n:'Katsu curry poulet',c:'Japonais',k:170,u:'g'},
+  {n:'Yakitori poulet',c:'Japonais',k:165,u:'g',x:'2 brochettes 100g = 165 kcal'},
+  {n:'Teriyaki poulet riz',c:'Japonais',k:155,u:'g'},
+  {n:'Tempura crevettes',c:'Japonais',k:220,u:'g',x:'4 pièces 100g = 220 kcal'},
+  {n:'Tempura légumes',c:'Japonais',k:180,u:'g'},
+  {n:'Onigiri saumon',c:'Japonais',k:175,u:'g',x:'1 onigiri 100g = 175 kcal'},
+  {n:'Onigiri thon mayo',c:'Japonais',k:195,u:'g'},
+  {n:'Riz à sushi',c:'Japonais',k:165,u:'g',x:'200g = 330 kcal'},
+  // ── WOK & CHINOIS ──
+  {n:'Riz cantonnais',c:'Wok & Chinois',k:175,u:'g',x:'assiette 250g = 438 kcal'},
+  {n:'Riz sauté légumes',c:'Wok & Chinois',k:155,u:'g'},
+  {n:'Riz sauté poulet',c:'Wok & Chinois',k:165,u:'g'},
+  {n:'Riz sauté crevettes',c:'Wok & Chinois',k:160,u:'g'},
+  {n:'Nouilles sautées poulet',c:'Wok & Chinois',k:170,u:'g',x:'assiette 300g = 510 kcal'},
+  {n:'Nouilles sautées boeuf',c:'Wok & Chinois',k:185,u:'g'},
+  {n:'Nouilles sautées légumes',c:'Wok & Chinois',k:140,u:'g'},
+  {n:'Chow mein poulet',c:'Wok & Chinois',k:165,u:'g'},
+  {n:'Poulet général Tao',c:'Wok & Chinois',k:195,u:'g'},
+  {n:'Poulet kung pao',c:'Wok & Chinois',k:185,u:'g'},
+  {n:'Boeuf aux poivrons wok',c:'Wok & Chinois',k:175,u:'g'},
+  {n:'Canard laqué',c:'Wok & Chinois',k:340,u:'g',x:'100g = 340 kcal'},
+  {n:'Nems frits porc',c:'Wok & Chinois',k:200,u:'g',x:'1 nem 50g = 100 kcal'},
+  {n:'Nems vapeur',c:'Wok & Chinois',k:120,u:'g'},
+  {n:'Raviolis vapeur dim sum',c:'Wok & Chinois',k:145,u:'g',x:'4 pièces 80g = 116 kcal'},
+  {n:'Soupe won ton',c:'Wok & Chinois',k:65,u:'g',x:'bol 350ml = 228 kcal'},
+  {n:'Soupe pékinoise',c:'Wok & Chinois',k:45,u:'g'},
+  {n:'Bao bun porc',c:'Wok & Chinois',k:215,u:'g',x:'1 bao 80g = 172 kcal'},
+  {n:'Bao bun poulet',c:'Wok & Chinois',k:195,u:'g'},
+  {n:'Chop suey légumes',c:'Wok & Chinois',k:75,u:'g'},
+  {n:'Porc au caramel',c:'Wok & Chinois',k:265,u:'g'},
+  {n:'Crevettes sauce aigre douce',c:'Wok & Chinois',k:140,u:'g'},
+  {n:'Porc sauce aigre douce',c:'Wok & Chinois',k:185,u:'g'},
+  // ── THAÏLANDAIS & ASIATIQUE ──
+  {n:'Pad thaï crevettes',c:'Thaïlandais',k:165,u:'g',x:'assiette 300g = 495 kcal'},
+  {n:'Pad thaï poulet',c:'Thaïlandais',k:170,u:'g'},
+  {n:'Pad thaï tofu',c:'Thaïlandais',k:155,u:'g'},
+  {n:'Curry vert poulet',c:'Thaïlandais',k:120,u:'g',x:'assiette 300g = 360 kcal'},
+  {n:'Curry rouge boeuf',c:'Thaïlandais',k:135,u:'g'},
+  {n:'Curry jaune légumes',c:'Thaïlandais',k:95,u:'g'},
+  {n:'Curry massaman',c:'Thaïlandais',k:145,u:'g'},
+  {n:'Tom yam soupe',c:'Thaïlandais',k:45,u:'g',x:'bol 350ml = 158 kcal'},
+  {n:'Tom kha soupe coco',c:'Thaïlandais',k:75,u:'g'},
+  {n:'Som tam salade papaye',c:'Thaïlandais',k:55,u:'g'},
+  {n:'Satay poulet brochette',c:'Thaïlandais',k:185,u:'g',x:'2 brochettes 100g = 185 kcal'},
+  {n:'Riz gluant',c:'Thaïlandais',k:175,u:'g'},
+  {n:'Vermicelles riz sautés',c:'Thaïlandais',k:150,u:'g'},
+  // ── CORÉEN ──
+  {n:'Bibimbap complet',c:'Coréen',k:150,u:'g',x:'bol 450g = 675 kcal'},
+  {n:'Bibimbap végétarien',c:'Coréen',k:130,u:'g'},
+  {n:'Bulgogi boeuf',c:'Coréen',k:185,u:'g'},
+  {n:'Poulet dakgalbi',c:'Coréen',k:165,u:'g'},
+  {n:'Japchae nouilles patate douce',c:'Coréen',k:145,u:'g'},
+  {n:'Kimchi',c:'Coréen',k:15,u:'g',x:'portion 50g = 8 kcal — quasi zéro'},
+  {n:'Kimchi fried rice',c:'Coréen',k:175,u:'g'},
+  {n:'Tteokbokki',c:'Coréen',k:150,u:'g'},
+  {n:'Ramyeon coréen instantané',c:'Coréen',k:420,u:'g',x:'sachet 120g = 504 kcal'},
+  // ── VIETNAMIEN ──
+  {n:'Pho boeuf',c:'Vietnamien',k:65,u:'g',x:'grand bol 600ml = 390 kcal'},
+  {n:'Pho poulet',c:'Vietnamien',k:58,u:'g'},
+  {n:'Bun bo boeuf vermicelles',c:'Vietnamien',k:95,u:'g'},
+  {n:'Banh mi sandwich',c:'Vietnamien',k:215,u:'g',x:'1 banh mi 200g = 430 kcal'},
+  {n:'Rouleaux de printemps frais',c:'Vietnamien',k:95,u:'g',x:'1 rouleau 80g = 76 kcal'},
+  {n:'Rouleaux de printemps frits',c:'Vietnamien',k:185,u:'g'},
+  {n:'Riz blanc vapeur jasmin',c:'Vietnamien',k:130,u:'g'},
+
+,
+
+  // ── CUISINE ESPAGNOLE ──
+  {n:'Paella valenciana poulet lapin',c:'Espagnol',k:155,u:'g',x:'assiette 350g = 543 kcal'},
+  {n:'Paella fruits de mer',c:'Espagnol',k:145,u:'g',x:'assiette 350g = 508 kcal'},
+  {n:'Paella mixte',c:'Espagnol',k:150,u:'g'},
+  {n:'Tortilla espagnole pommes de terre',c:'Espagnol',k:185,u:'g',x:'1 part 150g = 278 kcal'},
+  {n:'Tortilla légumes',c:'Espagnol',k:155,u:'g'},
+  {n:'Patatas bravas',c:'Espagnol',k:165,u:'g',x:'portion 150g = 248 kcal'},
+  {n:'Croquetas jamón',c:'Espagnol',k:225,u:'g',x:'3 pièces 90g = 203 kcal'},
+  {n:'Croquetas bacalao',c:'Espagnol',k:210,u:'g'},
+  {n:'Gambas al ajillo',c:'Espagnol',k:145,u:'g',x:'portion 150g = 218 kcal'},
+  {n:'Pulpo a la gallega',c:'Espagnol',k:95,u:'g',x:'portion 150g = 143 kcal'},
+  {n:'Calamares a la romana',c:'Espagnol',k:195,u:'g',x:'portion 150g = 293 kcal'},
+  {n:'Churros nature',c:'Espagnol',k:355,u:'g',x:'5 churros 100g = 355 kcal'},
+  {n:'Churros chocolat chaud',c:'Espagnol',k:380,u:'g'},
+  {n:'Gazpacho andalou',c:'Espagnol',k:30,u:'g',x:'verre 250ml = 75 kcal'},
+  {n:'Salmorejo',c:'Espagnol',k:75,u:'g',x:'bol 200ml = 150 kcal'},
+  {n:'Cocido madrileño',c:'Espagnol',k:145,u:'g'},
+  {n:'Fabada asturiana',c:'Espagnol',k:155,u:'g',x:'assiette 300g = 465 kcal'},
+  {n:'Albondigas sauce tomate',c:'Espagnol',k:175,u:'g',x:'6 boulettes 200g = 350 kcal'},
+  {n:'Chorizo espagnol',c:'Espagnol',k:455,u:'g',x:'3 tranches 30g = 137 kcal'},
+  {n:'Chorizo grillé',c:'Espagnol',k:430,u:'g'},
+  {n:'Jamón ibérico',c:'Espagnol',k:375,u:'g',x:'3 tranches 30g = 113 kcal'},
+  {n:'Jamón serrano',c:'Espagnol',k:268,u:'g',x:'3 tranches 30g = 80 kcal'},
+  {n:'Pimiento del piquillo',c:'Espagnol',k:35,u:'g'},
+  {n:'Pan con tomate',c:'Espagnol',k:185,u:'g',x:'1 tranche 80g = 148 kcal'},
+  {n:'Bocadillo jamón',c:'Espagnol',k:240,u:'g',x:'1 bocadillo 200g = 480 kcal'},
+  {n:'Bocadillo tortilla',c:'Espagnol',k:235,u:'g'},
+  {n:'Ensaladilla rusa',c:'Espagnol',k:155,u:'g',x:'portion 150g = 233 kcal'},
+  {n:'Pinchos mixtes',c:'Espagnol',k:185,u:'g'},
+  {n:'Empanada thon',c:'Espagnol',k:265,u:'g',x:'1 part 150g = 398 kcal'},
+  {n:'Arroz con leche',c:'Espagnol',k:130,u:'g',x:'portion 200g = 260 kcal'},
+  {n:'Crema catalana',c:'Espagnol',k:155,u:'g',x:'ramequin 120g = 186 kcal'},
+  {n:'Flan espagnol',c:'Espagnol',k:120,u:'g',x:'portion 120g = 144 kcal'},
+  {n:'Horchata',c:'Espagnol',k:55,u:'ml',x:'verre 250ml = 138 kcal'},
+  {n:'Sangria maison',c:'Espagnol',k:80,u:'ml',x:'verre 200ml = 160 kcal'},
+
+,
+
+  // ── POMME DE PAIN (chaîne Maroc) ──
+  {n:'PdP Sandwich poulet grillé',c:'Pomme de Pain',k:210,u:'g',x:'sandwich 220g = 462 kcal'},
+  {n:'PdP Sandwich thon mayo',c:'Pomme de Pain',k:245,u:'g',x:'sandwich 200g = 490 kcal'},
+  {n:'PdP Sandwich kefta',c:'Pomme de Pain',k:255,u:'g',x:'sandwich 210g = 536 kcal'},
+  {n:'PdP Sandwich merguez',c:'Pomme de Pain',k:265,u:'g'},
+  {n:'PdP Sandwich mixte',c:'Pomme de Pain',k:235,u:'g'},
+  {n:'PdP Sandwich jambon fromage',c:'Pomme de Pain',k:250,u:'g'},
+  {n:'PdP Sandwich végétarien',c:'Pomme de Pain',k:185,u:'g'},
+  {n:'PdP Club sandwich poulet',c:'Pomme de Pain',k:230,u:'g',x:'sandwich 250g = 575 kcal'},
+  {n:'PdP Croissant nature',c:'Pomme de Pain',k:410,u:'g',x:'1 croissant 60g = 246 kcal'},
+  {n:'PdP Croissant jambon fromage',c:'Pomme de Pain',k:350,u:'g',x:'1 croissant 80g = 280 kcal'},
+  {n:'PdP Pain au chocolat',c:'Pomme de Pain',k:395,u:'g',x:'1 pièce 65g = 257 kcal'},
+  {n:'PdP Salade composée thon',c:'Pomme de Pain',k:95,u:'g',x:'barquette 250g = 238 kcal'},
+  {n:'PdP Salade composée poulet',c:'Pomme de Pain',k:105,u:'g'},
+  {n:'PdP Salade verte nature',c:'Pomme de Pain',k:25,u:'g',x:'barquette 150g = 38 kcal'},
+  {n:'PdP Soupe du jour',c:'Pomme de Pain',k:45,u:'g',x:'bol 250ml = 113 kcal'},
+  {n:'PdP Jus orange frais',c:'Pomme de Pain',k:45,u:'ml',x:'verre 250ml = 113 kcal'},
+  {n:'PdP Café au lait',c:'Pomme de Pain',k:40,u:'ml',x:'grand 200ml = 80 kcal'},
+  {n:'PdP Formule sandwich + boisson',c:'Pomme de Pain',k:220,u:'g',x:'environ 500 kcal total'},
+  {n:'PdP Wrap poulet crudités',c:'Pomme de Pain',k:190,u:'g',x:'wrap 220g = 418 kcal'},
+  {n:'PdP Panini poulet',c:'Pomme de Pain',k:240,u:'g',x:'panini 200g = 480 kcal'},
+  {n:'PdP Panini thon',c:'Pomme de Pain',k:235,u:'g'},
+  {n:'PdP Brownie',c:'Pomme de Pain',k:420,u:'g',x:'1 brownie 60g = 252 kcal'},
+  {n:'PdP Muffin chocolat',c:'Pomme de Pain',k:385,u:'g',x:'1 muffin 80g = 308 kcal'},
+  {n:'PdP Cookie',c:'Pomme de Pain',k:470,u:'g',x:'1 cookie 40g = 188 kcal'},
+
+,
+
+  // ── BISCUITS MARQUES ──
+  {n:'Prince chocolat',c:'Biscuits',k:468,u:'g',x:'1 biscuit 16g = 75 kcal'},
+  {n:'Prince vanille',c:'Biscuits',k:455,u:'g',x:'1 biscuit 16g = 73 kcal'},
+  {n:'Prince fraise',c:'Biscuits',k:450,u:'g',x:'1 biscuit 16g = 72 kcal'},
+  {n:'Prince goût lait',c:'Biscuits',k:460,u:'g'},
+  {n:'Kinder Bueno',c:'Biscuits',k:546,u:'g',x:'1 barre 43g = 235 kcal'},
+  {n:'Kinder Bueno White',c:'Biscuits',k:558,u:'g',x:'1 barre 39g = 218 kcal'},
+  {n:'Kinder Schoko-Bons',c:'Biscuits',k:568,u:'g',x:'3 pièces 21g = 119 kcal'},
+  {n:'Kinder Délice',c:'Biscuits',k:415,u:'g',x:'1 gâteau 39g = 162 kcal'},
+  {n:'Kinder Maxi',c:'Biscuits',k:542,u:'g',x:'1 barre 21g = 114 kcal'},
+  {n:'Kinder Country',c:'Biscuits',k:518,u:'g',x:'1 barre 23g = 119 kcal'},
+  {n:'Gullon digestive nature',c:'Biscuits',k:455,u:'g',x:'1 biscuit 14g = 64 kcal'},
+  {n:'Gullon digestive chocolat',c:'Biscuits',k:478,u:'g',x:'1 biscuit 14g = 67 kcal'},
+  {n:'Gullon Maria',c:'Biscuits',k:420,u:'g',x:'3 biscuits 21g = 88 kcal'},
+  {n:'Gullon sans sucre digestive',c:'Biscuits',k:418,u:'g',x:'option moins pire'},
+  {n:'Gullon sans sucre Maria',c:'Biscuits',k:385,u:'g'},
+  {n:'Digestive McVities nature',c:'Biscuits',k:463,u:'g',x:'1 biscuit 14g = 65 kcal'},
+  {n:'Digestive McVities chocolat',c:'Biscuits',k:492,u:'g',x:'1 biscuit 17g = 84 kcal'},
+  {n:'Digestive McVities caramel',c:'Biscuits',k:485,u:'g'},
+  {n:'Petit Beurre LU',c:'Biscuits',k:428,u:'g',x:'4 biscuits 28g = 120 kcal'},
+  {n:'Mikado chocolat',c:'Biscuits',k:488,u:'g',x:'1 boîte 39g = 190 kcal'},
+  {n:'Oreo nature',c:'Biscuits',k:471,u:'g',x:'3 biscuits 33g = 155 kcal'},
+  {n:'Oreo Golden',c:'Biscuits',k:482,u:'g'},
+  {n:'Belvita matin nature',c:'Biscuits',k:428,u:'g',x:'1 biscuit 12g = 51 kcal'},
+  {n:'Belvita matin chocolat',c:'Biscuits',k:442,u:'g'},
+  {n:'Speculoos Lotus',c:'Biscuits',k:484,u:'g',x:'2 biscuits 16g = 77 kcal'},
+  {n:'Hanini biscuits marocains',c:'Biscuits',k:445,u:'g',x:'3 biscuits 30g = 134 kcal'},
+  {n:'Biscuits thé marocains',c:'Biscuits',k:430,u:'g',x:'3 biscuits 30g = 129 kcal'},
+  {n:'Figolu figues',c:'Biscuits',k:368,u:'g',x:'2 biscuits 28g = 103 kcal'},
+  {n:'Pépito chocolat',c:'Biscuits',k:502,u:'g',x:'1 biscuit 18g = 90 kcal'},
+  {n:'Cracotte blé complet',c:'Biscuits',k:342,u:'g',x:'1 cracotte 10g = 34 kcal'},
+  {n:'Wasa seigle',c:'Biscuits',k:335,u:'g',x:'1 tranche 11g = 37 kcal'},
+
+];
+
+const MDEF=[
+  {id:'matin',lbl:'☀️ Matin',t:380},
+  {id:'dejeuner',lbl:'🌤 Déjeuner',t:560},
+  {id:'diner',lbl:'🌙 Dîner',t:480},
+  {id:'collation',lbl:'🍵 Collation',t:80},
+];
+
+let selFood=null,curMeal='matin',off=0;
+const KEY='app_v2';
+const TODAY=dk(0);
+let BIN_ID=localStorage.getItem('bin_id')||'';
+let API_KEY=localStorage.getItem('api_key')||'';
+let syncTimer=null;
+let cloudData=null;
+
+function dk(o=0){const d=new Date();d.setDate(d.getDate()+o);return d.toISOString().split('T')[0]}
+
+// ── LOCAL STORAGE (toujours utilisé comme cache) ──
+function loadLocal(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
+function saveLocal(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+
+// ── CLOUD SYNC ──
+async function loadCloud(){
+  if(!BIN_ID||!API_KEY)return null;
+  try{
+    const r=await fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{
+      headers:{'X-Master-Key':API_KEY,'X-Bin-Meta':'false'}
+    });
+    if(!r.ok)return null;
+    const data=await r.json();
+    saveLocal(data);
+    return data;
+  }catch(e){return null;}
+}
+
+async function saveCloud(s){
+  if(!BIN_ID||!API_KEY){saveLocal(s);return;}
+  saveLocal(s);
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(async()=>{
+    try{
+      await fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},
+        body:JSON.stringify(s)
+      });
+      showSyncStatus('✓ Synchronisé');
+    }catch(e){showSyncStatus('⚠ Sync échouée');}
+  },1500);
+}
+
+function showSyncStatus(msg){
+  let el=document.getElementById('sync-status');
+  if(!el)return;
+  el.textContent=msg;
+  el.style.opacity='1';
+  setTimeout(()=>{el.style.opacity='0';},2500);
+}
+
+function gs(){
+  const s=loadLocal();
+  if(!s.days)s.days={};
+  if(!s.objs)s.objs={};
+  return s;
+}
+function gd(o=0){
+  const s=gs(),k=dk(o);
+  if(!s.days[k])s.days[k]={sport:false,calories:false,cig:false,steps:false,eau:false,posture:false,posture2:false,meals:{matin:[],dejeuner:[],diner:[],collation:[]},cigs:0,poids:null,note:''};
+  if(!s.days[k].meals)s.days[k].meals={matin:[],dejeuner:[],diner:[],collation:[]};
+  return s.days[k];
+}
+function sd(d,o=0){const s=gs();s.days[dk(o)]=d;saveCloud(s);}
+
+// ── SETUP CLOUD ──
+function showSetup(){
+  document.getElementById('setup-modal').style.display='flex';
+}
+function hideSetup(){
+  document.getElementById('setup-modal').style.display='none';
+}
+async function saveSetup(){
+  const bid=document.getElementById('inp-binid').value.trim();
+  const akey=document.getElementById('inp-apikey').value.trim();
+  if(!bid||!akey){alert('Remplis les deux champs');return;}
+  BIN_ID=bid;API_KEY=akey;
+  localStorage.setItem('bin_id',bid);
+  localStorage.setItem('api_key',akey);
+  document.getElementById('setup-btn-lbl').textContent='Chargement...';
+  const data=await loadCloud();
+  if(data){
+    toast('✅ Connecté et synchronisé !');
+    hideSetup();
+    loadChecks();upAll();renderCig();renderPoids();renderNote();
+  }else{
+    alert('Clé incorrecte ou bin_id invalide. Vérifie et réessaie.');
+  }
+  document.getElementById('setup-btn-lbl').textContent='Connecter';
+}
+async function syncNow(){
+  if(!BIN_ID||!API_KEY){showSetup();return;}
+  document.getElementById('sync-status').textContent='⟳ Sync...';
+  const data=await loadCloud();
+  if(data){
+    toast('✅ Données synchronisées !');
+    loadChecks();upAll();renderCig();renderPoids();renderNote();
+  }
+}
+function tc(d){let t=0;for(const m in d.meals)d.meals[m].forEach(f=>t+=f.k||0);return t;}
+function dScore(o=0){const d=gd(o);return(d.sport?30:0)+(d.calories?25:0)+(d.cig?20:0)+(d.steps?15:0)+(d.eau?10:0)+(d.posture?10:0)+(d.posture2?10:0);}
+function dValid(o=0){const d=gd(o);return[d.sport,d.calories,d.cig,d.steps,d.eau,d.posture,d.posture2].filter(Boolean).length>=2;}
+
+// ── UPDATES ──
+function upAll(){upBar();upScore();upStreak();}
+
+function upBar(){
+  const d=gd(),t=tc(d),p=Math.min(t/1700*100,100);
+  document.getElementById('sb-cal').innerHTML=t+' <span>/ 1700</span>';
+  document.getElementById('cal-prog-fill').style.width=p+'%';
+  const rem=1700-t;
+  const re=document.getElementById('sb-remain');
+  re.textContent=rem>=0?rem+' kcal restantes':'+' +(t-1700)+' kcal en trop';
+  re.style.color=rem>=0?'#ffaa00':'#ff6666';
+}
+
+function upScore(){
+  const sc=dScore();
+  document.getElementById('sc-num').textContent=sc;
+  document.getElementById('sc-fill').style.width=sc+'%';
+  document.getElementById('pts-badge').textContent=sc+' pts';
+  const grades=[{min:100,g:'PARFAIT 🏆',m:'Journée irréprochable'},{min:75,g:'EXCELLENT',m:'Presque parfait'},{min:50,g:'BIEN',m:'Plus de la moitié'},{min:25,g:'DÉMARRÉ',m:'Continue'},{min:1,g:'EN COURS',m:'Continue'},{min:0,g:'—',m:'Commence !'}];
+  const gr=grades.find(x=>sc>=x.min)||grades[grades.length-1];
+  document.getElementById('sc-grade').textContent=gr.g;
+  document.getElementById('sc-msg').textContent=gr.m;
+}
+
+function upStreak(){
+  let streak=0,cur=0;
+  for(let i=0;i<90;i++){
+    if(dValid(-i))cur++;
+    else if(i>0){streak=Math.max(streak,cur);cur=0;}
+  }
+  streak=Math.max(streak,cur);
+  document.getElementById('sb-streak').textContent=streak;
+  document.getElementById('streak-badge').textContent=streak+' jours';
+  // dots
+  const c=document.getElementById('sdots');c.innerHTML='';
+  for(let i=13;i>=0;i--){
+    const el=document.createElement('div');
+    el.className='sdot'+(i===0?' now':dValid(-i)?' on':i>0?' off':'');
+    c.appendChild(el);
+  }
+}
+
+// ── CHECKLIST ──
+function ck(el,key){
+  const d=gd();d[key]=!d[key];sd(d);
+  el.classList.toggle('on',d[key]);
+  el.querySelector('.tc-box').textContent=d[key]?'✓':'';
+  upAll();
+}
+function loadChecks(){
+  const d=gd();
+  const map={sport:'tc-sport',calories:'tc-cal',cig:'tc-cig',steps:'tc-steps',eau:'tc-eau',posture:'tc-posture',posture2:'tc-posture2'};
+  for(const[k,id] of Object.entries(map)){
+    const el=document.getElementById(id);if(!el)continue;
+    el.classList.toggle('on',!!d[k]);
+    el.querySelector('.tc-box').textContent=d[k]?'✓':'';
+  }
+}
+
+// ── FOOD ──
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function ds(){
+  const q=norm(document.getElementById('fsearch').value.trim());
+  const list=document.getElementById('aclist');
+  selFood=null;document.getElementById('sprev').style.display='none';
+  if(q.length<2){list.style.display='none';return;}
+  const res=DB.filter(f=>norm(f.n).includes(q)||norm(f.c).includes(q)).slice(0,8);
+  if(!res.length){list.style.display='none';return;}
+  list.innerHTML='';
+  res.forEach(f=>{
+    const el=document.createElement('div');el.className='acrow';
+    el.innerHTML='<div><div class="ac-name">'+f.n+'</div><div class="ac-cat">'+f.c+'</div></div><div style="text-align:right"><div class="ac-k">'+f.k+'</div><div class="ac-u">kcal/100'+f.u+'</div></div>';
+    el.onclick=()=>{
+      selFood=f;document.getElementById('fsearch').value=f.n;list.style.display='none';
+      document.getElementById('fqty').focus();
+      document.getElementById('sprev-name').textContent=f.n;
+      document.getElementById('sprev-info').textContent=f.k+' kcal/100'+f.u+(f.x?' — '+f.x:'');
+      document.getElementById('sprev').style.display='block';
+    };
+    list.appendChild(el);
+  });
+  list.style.display='block';
+}
+function af(){
+  const qty=parseFloat(document.getElementById('fqty').value)||0;
+  if(!selFood){
+    const nm=document.getElementById('fsearch').value.trim();
+    if(!nm||!qty)return;
+    const kc=parseInt(prompt('"'+nm+'" inconnu. Calories pour '+qty+'g/ml ?'));
+    if(!kc||isNaN(kc))return;
+    pf(nm,qty,'g',kc,qty+'g — '+kc+' kcal');return;
+  }
+  if(!qty){document.getElementById('fqty').focus();return;}
+  const kc=Math.round(selFood.k/100*qty);
+  pf(selFood.n,qty,selFood.u,kc,qty+selFood.u+' — '+kc+' kcal');
+}
+function pf(name,qty,unit,kc,sub){
+  const d=gd();d.meals[curMeal].push({n:name,k:kc,sub});sd(d);
+  document.getElementById('fsearch').value='';document.getElementById('fqty').value='';
+  document.getElementById('sprev').style.display='none';selFood=null;
+  upAll();renderRepas();toast('✓ '+name+' — '+kc+' kcal');
+}
+function pm(el){document.querySelectorAll('.mb').forEach(b=>b.classList.remove('on'));el.classList.add('on');curMeal=el.dataset.meal;}
+function dfood(mid,idx){const d=gd();d.meals[mid].splice(idx,1);sd(d);upAll();renderRepas();}
+
+function renderRepas(){
+  const d=gd();const c=document.getElementById('repas-container');if(!c)return;c.innerHTML='';
+  let total=0;
+  MDEF.forEach(m=>{
+    const items=d.meals[m.id]||[];const sum=items.reduce((a,f)=>a+(f.k||0),0);total+=sum;
+    const sec=document.createElement('div');sec.className='msec';
+    let h='<div class="msec-head"><span class="msec-lbl">'+m.lbl+'</span><span class="msec-kcal">'+sum+' kcal</span></div>';
+    if(!items.length){h+='<div class="empty-lbl">Rien ajouté</div>';}
+    sec.innerHTML=h;c.appendChild(sec);
+    items.forEach(function(f,i){
+      var row=document.createElement('div');row.className='frow';
+      var left=document.createElement('div');left.style.flex='1';
+      var name=document.createElement('div');name.className='fr-name';name.textContent=f.n;
+      var sub=document.createElement('div');sub.className='fr-sub';sub.textContent=f.sub||'';
+      left.appendChild(name);left.appendChild(sub);
+      var right=document.createElement('div');right.className='fr-r';
+      var kcal=document.createElement('div');kcal.className='fr-k';kcal.textContent=f.k;
+      var btn=document.createElement('button');btn.className='frdel';btn.textContent='✕';
+      btn.dataset.mid=m.id;btn.dataset.idx=i;btn.onclick=function(){delBtn(this);};
+      right.appendChild(kcal);right.appendChild(btn);
+      row.appendChild(left);row.appendChild(right);
+      sec.appendChild(row);
+    });
+  });
+  const tb=document.createElement('div');tb.className='total-block';
+  tb.innerHTML='<div class="total-lbl">Total journée</div><div class="total-val">'+total+' kcal</div>';
+  c.appendChild(tb);
+}
+function mid_safe(s){return s;}
+function delBtn(btn){dfood(btn.dataset.mid,parseInt(btn.dataset.idx));}
+
+// ── CIG / POIDS / NOTE ──
+function cig(d){const day=gd();day.cigs=Math.max(0,(day.cigs||0)+d);sd(day);renderCig();}
+function renderCig(){
+  const day=gd(),n=day.cigs||0;
+  const el=document.getElementById('cig-n'),msg=document.getElementById('cig-msg');
+  el.textContent=n;el.className='cig-n'+(n===0?' z':' b');
+  if(n===0)msg.innerHTML='<strong>Zéro ✓</strong><p>Continue. Chaque jour sans compte.</p>';
+  else if(n===1)msg.innerHTML='<strong>1 cigarette</strong><p>Identifie le déclencheur. Demain : zéro.</p>';
+  else msg.innerHTML='<strong>'+n+' cigarettes</strong><p>Revois les stratégies de remplacement.</p>';
+}
+function sp(){
+  const v=parseFloat(document.getElementById('pinp').value);
+  if(!v||v<30||v>300)return;
+  const d=gd();d.poids=v;sd(d);toast('Poids enregistré — '+v+' kg');
+}
+function renderPoids(){const d=gd();document.getElementById('pinp').value=d.poids||'';}
+let ntmr;
+function initNote(){
+  document.getElementById('note').addEventListener('input',()=>{
+    clearTimeout(ntmr);ntmr=setTimeout(()=>{const d=gd();d.note=document.getElementById('note').value;sd(d);},1200);
+  });
+}
+function renderNote(){const d=gd();document.getElementById('note').value=d.note||'';}
+
+// ── HISTORIQUE ──
+function renderHist(){
+  const ws=document.getElementById('wsum'),hl=document.getElementById('hlist');
+  if(!ws||!hl)return;
+  let tc2=0,good=0,ts=0,cnt=0;const days=[];
+  for(let i=-6;i<=0;i++){
+    try{
+      const s=gs(),k=dk(i);if(!s.days[k])continue;
+      const d=s.days[k],cal=tc(d);
+      const n=[d.sport,d.calories,d.cig,d.steps,d.eau].filter(Boolean).length;
+      const dt=new Date();dt.setDate(dt.getDate()+i);
+      days.push({dt,cal,n,cig:d.cigs||0,poids:d.poids,i});
+      tc2+=cal;cnt++;if(cal>0&&cal<=1800)good++;if(d.sport)ts++;
+    }catch(e){}
+  }
+  ws.innerHTML='<div class="ws"><div class="ws-v jade">'+good+'</div><div class="ws-l">Jours OK</div></div><div class="ws"><div class="ws-v fire">'+ts+'</div><div class="ws-l">Séances</div></div><div class="ws"><div class="ws-v amber">'+(cnt?Math.round(tc2/cnt):0)+'</div><div class="ws-l">Moy. kcal</div></div>';
+  if(!days.length){hl.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Commence aujourd\'hui.</div>';return;}
+  let h='';
+  days.reverse().forEach(d=>{
+    const lbl=d.i===0?"Aujourd'hui":d.i===-1?"Hier":d.dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+    const good=d.cal>0&&d.cal<=1800,over=d.cal>1800;
+    h+='<div class="hitem'+(good?' good':over?' over':'')+'"><div><div class="hi-date">'+lbl+'</div><div class="hi-det">'+d.n+' actions · '+d.cig+' cig'+(d.poids?' · '+d.poids+' kg':'')+'</div></div><div class="hi-cal '+(good?'good':over?'over':'miss')+'">'+(d.cal>0?d.cal+' kcal':'—')+'</div></div>';
+  });
+  hl.innerHTML=h;
+}
+
+// ── PROGRAMME ──
+function td(id){
+  const det=document.getElementById('dd-'+id);
+  const arr=document.getElementById('da-'+id);
+  if(!det)return;
+  det.classList.toggle('open');
+  arr.classList.toggle('open');
+}
+
+// ── OBJECTIFS ──
+function to(el,id){
+  const s=gs();s.objs[id]=!s.objs[id];save(s);
+  el.classList.toggle('done',s.objs[id]);
+  el.querySelector('.ocheck').textContent=s.objs[id]?'✓':'';
+}
+function loadObjs(){
+  const s=gs();
+  document.querySelectorAll('.oitem').forEach(el=>{
+    const id=el.id.replace('oi','');
+    if(s.objs&&s.objs[id]){el.classList.add('done');el.querySelector('.ocheck').textContent='✓';}
+  });
+}
+
+// ── NAV ──
+function sw(n,el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sc-'+n).classList.add('active');
+  el.classList.add('active');
+  if(n===3)renderRepas();
+  if(n===5){renderCig();renderPoids();renderNote();renderHist();}
+}
+
+// ── BANNER ──
+function getDayNumber(){
+  const start=new Date(localStorage.getItem('start_date')||'2026-05-04');
+  const today=new Date();
+  const diff=Math.floor((today-start)/(1000*60*60*24))+1;
+  return Math.max(1,diff);
+}
+
+function setBanner(){
+  const now=new Date();
+  const dow=now.getDay();
+  const J=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const M=['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
+  const titles={1:'HAUT DU CORPS A + CARDIO',2:'COURSE PROGRESSIVE',3:'BAS DU CORPS & CORE',4:'REPOS ACTIF',5:'HAUT DU CORPS B + CARDIO',6:'SORTIE LONGUE + ABDOS',0:'REPOS TOTAL'};
+  const texts={1:'Pompes · Dips · Pike push-ups · Élévations latérales — ce soir',2:'3 km sem.1 → 5 km sem.2 → 7 km sem.3 → 9 km sem.4',3:'Pont fessier · Gainage · Abdos · Tapis 25 min',4:'7000 pas · Escaliers · Étirements pectoraux',5:'Pompes déclinées · Rowing haltères · Épaules avancé',6:'Course longue côtière · Abdos finisher',0:'Le muscle se construit maintenant. Repos obligatoire.'};
+  document.getElementById('day-title').textContent='JOUR '+getDayNumber()+' — '+J[dow]+' '+now.getDate()+' '+M[now.getMonth()]+' — '+titles[dow];
+  document.getElementById('day-text').textContent=texts[dow];
+  // Highlight today in programme
+  const dayMap={1:'lun',2:'mar',3:'mer',4:'jeu',5:'ven',6:'sam',0:'dim'};
+  document.querySelectorAll('.drow').forEach(r=>r.classList.remove('today'));
+  const todayRow=document.getElementById('dr-'+dayMap[dow]);
+  if(todayRow)todayRow.classList.add('today');
+}
+
+// ── TOAST ──
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#fsearch')&&!e.target.closest('#aclist'))
+    document.getElementById('aclist').style.display='none';
+});
+
+// ── BILAN ──
+function copyBilan(){
+  const d=gd();
+  const s=gs();
+  const now=new Date();
+  const JOURS=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const MOIS=['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
+  const dateStr=JOURS[now.getDay()]+' '+now.getDate()+' '+MOIS[now.getMonth()];
+  
+  // Streak
+  let streak=0,cur=0;
+  for(let i=0;i<90;i++){if(dValid(-i))cur++;else if(i>0){streak=Math.max(streak,cur);cur=0;}}
+  streak=Math.max(streak,cur);
+  
+  // Calories
+  const cal=tc(d);
+  const rem=1700-cal;
+  
+  // Actions
+  const actions=[];
+  if(d.sport)actions.push('Séance faite');
+  if(d.calories)actions.push('1700 kcal OK');
+  if(d.cig)actions.push('Zéro cigarette');
+  if(d.steps)actions.push('7000 pas');
+  if(d.eau)actions.push('1.5L eau');
+  if(d.posture)actions.push('Posture matin');
+  if(d.posture2)actions.push('Étirements soir');
+  
+  // Repas
+  const repas=[];
+  const mealNames={matin:'Matin',dejeuner:'Déjeuner',diner:'Dîner',collation:'Collation'};
+  for(const[mid,lbl] of Object.entries(mealNames)){
+    const items=d.meals[mid]||[];
+    if(items.length){
+      const sum=items.reduce((a,f)=>a+(f.k||0),0);
+      const noms=items.map(f=>f.n).join(', ');
+      repas.push(lbl+' ('+sum+' kcal) : '+noms);
+    }
+  }
+  
+  // Poids
+  let poidsStr='Non renseigné';
+  if(d.poids)poidsStr=d.poids+' kg';
+  else{
+    for(let i=1;i<30;i++){
+      const pd=gd(-i);
+      if(pd.poids){poidsStr=pd.poids+' kg (il y a '+i+' j)';break;}
+    }
+  }
+  
+  const score=dScore();
+  
+  const bilan=`📊 MON BILAN — ${dateStr}
+━━━━━━━━━━━━━━━━━━━━
+⚖️ Poids : ${poidsStr}
+🔥 Streak : ${streak} jours
+⚡ Score du jour : ${score}/120 pts
+
+✅ Actions cochées (${actions.length}/7) :
+${actions.length>0?actions.map(a=>'  · '+a).join('\n'):'  · Aucune encore'}
+
+🍽️ Alimentation : ${cal} kcal / 1700
+${rem>=0?'  Reste : '+rem+' kcal':'  Dépassement : +'+(cal-1700)+' kcal'}
+${repas.length>0?repas.map(r=>'  · '+r).join('\n'):'  · Rien renseigné'}
+
+📝 Note : ${d.note||'Aucune note'}
+━━━━━━━━━━━━━━━━━━━━
+Copie ce bilan et colle-le dans Claude pour un suivi personnalisé.`;
+
+  navigator.clipboard.writeText(bilan).then(()=>{
+    const btn=document.getElementById('bilan-btn');
+    btn.textContent='✓ Copié !';
+    btn.style.background='var(--amber)';
+    setTimeout(()=>{btn.textContent='📋 Copier mon bilan du jour';btn.style.background='var(--jade)';},2500);
+  }).catch(()=>{
+    // Fallback
+    const ta=document.createElement('textarea');
+    ta.value=bilan;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('✓ Bilan copié !');
+  });
+}
+
+// ── NOTIFICATIONS ──
+function askNotifPermission(){
+  if(!('Notification' in window)){
+    alert('Les notifications ne sont pas supportées sur ce navigateur.');
+    return;
+  }
+  Notification.requestPermission().then(perm=>{
+    if(perm==='granted'){
+      localStorage.setItem('notif_enabled','1');
+      scheduleNotifs();
+      toast('Rappels activés !');
+      renderNotifSettings();
+    } else {
+      toast('Rappels refusés — active-les dans les réglages Chrome');
+    }
+  });
+}
+
+function scheduleNotifs(){
+  if(!('serviceWorker' in navigator))return;
+  // On utilise les notifications Web Push via setTimeout pour la session courante
+  // Pour des rappels persistants, l'app doit rester ouverte
+  const enabled=localStorage.getItem('notif_enabled')==='1';
+  if(!enabled)return;
+
+  // Rappel matin posture — 7h30
+  const now=new Date();
+  const matin=new Date();
+  matin.setHours(7,30,0,0);
+  if(matin<=now)matin.setDate(matin.getDate()+1);
+  const msToMatin=matin-now;
+
+  // Rappel soir étirements — 21h30
+  const soir=new Date();
+  soir.setHours(21,30,0,0);
+  if(soir<=now)soir.setDate(soir.getDate()+1);
+  const msToSoir=soir-now;
+
+  setTimeout(()=>{
+    new Notification('🧘 Routine posture matin',{
+      body:'Vacuum 5×30s · Psoas 2×30s · Chat-vache — 3 min dans le lit',
+      icon:'https://cdn.jsdelivr.net/npm/twemoji@14/assets/72x72/1f9d8.png'
+    });
+  }, msToMatin);
+
+  setTimeout(()=>{
+    new Notification('🌙 Étirements soir',{
+      body:'Pectoraux dans porte · Psoas fente · 5 min avant de dormir',
+      icon:'https://cdn.jsdelivr.net/npm/twemoji@14/assets/72x72/1f319.png'
+    });
+  }, msToSoir);
+
+  // Rappel calories si pas cochées — 20h
+  const cal=new Date();
+  cal.setHours(20,0,0,0);
+  if(cal<=now)cal.setDate(cal.getDate()+1);
+  setTimeout(()=>{
+    const d=gd();
+    const coches=[d.sport,d.calories,d.cig,d.steps,d.eau].filter(Boolean).length;
+    if(coches<3){
+      new Notification('📊 Mon Tracker — Bilan du jour',{
+        body:'Tu as coché '+coches+'/7 cases. Il reste du temps ce soir !',
+        icon:'https://cdn.jsdelivr.net/npm/twemoji@14/assets/72x72/1f4ca.png'
+      });
+    }
+  }, cal-now);
+}
+
+function renderNotifSettings(){
+  const el=document.getElementById('notif-status');
+  if(!el)return;
+  const enabled=localStorage.getItem('notif_enabled')==='1';
+  const perm=('Notification' in window)?Notification.permission:'non supporté';
+  if(enabled&&perm==='granted'){
+    el.textContent='Activés ✓ — 7h30 posture · 20h bilan · 21h30 étirements';
+    el.style.color='var(--jade)';
+    document.getElementById('notif-btn').textContent='Désactiver les rappels';
+    document.getElementById('notif-btn').style.background='var(--muted)';
+  } else {
+    el.textContent='Non activés';
+    el.style.color='var(--muted)';
+    document.getElementById('notif-btn').textContent='Activer les rappels';
+    document.getElementById('notif-btn').style.background='var(--jade)';
+  }
+}
+
+function toggleNotifs(){
+  const enabled=localStorage.getItem('notif_enabled')==='1';
+  if(enabled){
+    localStorage.setItem('notif_enabled','0');
+    toast('Rappels désactivés');
+    renderNotifSettings();
+  } else {
+    askNotifPermission();
+  }
+}
+
+// ── INIT ──
+setBanner();loadChecks();loadObjs();initNote();renderNote();renderCig();renderPoids();upAll();
+if(localStorage.getItem('notif_enabled')==='1'&&('Notification' in window)&&Notification.permission==='granted'){
+  scheduleNotifs();
+}
+// Set start date if not already set
+if(!localStorage.getItem('start_date')){
+  localStorage.setItem('start_date','2026-05-04');
+}
+// Cloud status
+const cs=document.getElementById('cloud-status');
+if(cs){
+  if(BIN_ID&&API_KEY){
+    cs.textContent='Connecté ✓';cs.style.color='var(--jade)';
+    // Auto sync on load
+    loadCloud().then(data=>{
+      if(data){loadChecks();upAll();renderCig();renderPoids();renderNote();}
+    });
+  }else{
+    cs.textContent='Non configuré';
+  }
+}
+</script>
+</body>
+</html>
